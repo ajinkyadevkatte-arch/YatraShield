@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YatraShield – Smart Safety & QR System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #dde6f0;
+    --surface: #dde6f0;
+    --neu-light: #eef4fc;
+    --neu-dark: #b8c9de;
+    --blue-deep: #1a3a6b;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+  /* Neumorphism */
+  .neu { background: var(--surface); box-shadow: 8px 8px 16px var(--neu-dark), -8px -8px 16px var(--neu-light); border-radius: 16px; }
+  .neu-sm { background: var(--surface); box-shadow: 4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light); border-radius: 12px; }
+  .neu-inset { background: var(--surface); box-shadow: inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light); border-radius: 12px; }
+  .neu-btn { background: var(--surface); box-shadow: 5px 5px 10px var(--neu-dark), -5px -5px 10px var(--neu-light); border-radius: 10px; border: none; cursor: pointer; transition: all 0.15s ease; font-family: 'Sora', sans-serif; font-weight: bold;}
+  .neu-btn:active { box-shadow: inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light); transform: scale(0.98); }
+  .neu-btn-blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 5px 5px 12px #9ab0cc, -2px -2px 8px #eef4fc; color: white; }
+  .neu-btn-blue:active { box-shadow: inset 3px 3px 8px #1a3a9e, inset -3px -3px 8px #3b7cff; }
+  .neu-btn-red { background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 5px 5px 12px #9ab0cc, -2px -2px 8px #eef4fc; color: white; }
+  .neu-input { background: var(--surface); box-shadow: inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light); border: none; border-radius: 10px; padding: 10px 14px; font-family: 'Sora', sans-serif; font-size: 14px; color: var(--text-primary); width: 100%; outline: none; transition: box-shadow 0.2s; }
+  .neu-input:focus { box-shadow: inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light), 0 0 0 2px #2563eb44; }
+
+  /* Views */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Header */
+  .header-bar { background: linear-gradient(135deg, #1a3a6b 0%, #1e4d8c 50%, #1a3a6b 100%); box-shadow: 0 4px 20px #0d2040aa; }
+  .shield-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #3b82f6, #60a5fa); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px #1d4ed844; }
+
+  /* Stats */
+  .stat-card { background: var(--surface); box-shadow: 8px 8px 20px var(--neu-dark), -8px -8px 20px var(--neu-light); border-radius: 20px; padding: 18px 14px; position: relative; overflow: hidden; }
+  .stat-num { font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+  .stat-label { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .progress-track { background: var(--surface); box-shadow: inset 2px 2px 6px var(--neu-dark), inset -2px -2px 6px var(--neu-light); border-radius: 999px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #60a5fa); border-radius: 999px; transition: width 1s ease; box-shadow: 0 0 10px #3b82f688; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  .yatra-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+  .yatra-table thead th { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px; text-align: left; }
+  .yatra-table tbody tr { background: var(--surface); box-shadow: 4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light); border-radius: 12px; transition: box-shadow 0.2s; }
+  .yatra-table tbody tr:hover { box-shadow: 6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light); }
+  .yatra-table tbody td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+  .yatra-table tbody td:first-child { border-radius: 12px 0 0 12px; }
+  .yatra-table tbody td:last-child { border-radius: 0 12px 12px 0; }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .badge-yellow { background: #fef9c3; color: #92400e; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-purple { background: #f3e8ff; color: #7e22ce; }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-green .badge-dot { background: #16a34a; }
+  .badge-yellow .badge-dot { background: #d97706; }
+
+  /* Toggle */
+  .toggle-wrap { position: relative; display: inline-flex; align-items: center; }
+  .toggle-input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-slider { width: 40px; height: 22px; background: var(--surface); box-shadow: inset 2px 2px 5px var(--neu-dark), inset -2px -2px 5px var(--neu-light); border-radius: 999px; cursor: pointer; transition: 0.3s; position: relative; }
+  .toggle-slider::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); box-shadow: 2px 2px 5px var(--neu-dark), -1px -1px 3px var(--neu-light); transition: 0.3s; }
+  .toggle-input:checked + .toggle-slider { box-shadow: inset 2px 2px 5px #0f9a41, inset -2px -2px 5px #22d46a; }
+  .toggle-input:checked + .toggle-slider::after { transform: translateX(18px); background: #16a34a; box-shadow: 0 0 8px #16a34a88; }
+
+  /* Tab Nav */
+  .tab-nav { display: flex; gap: 6px; padding: 6px; background: var(--surface); box-shadow: inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light); border-radius: 14px; }
+  .tab-btn { flex: 1; padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; font-family: 'Sora', sans-serif; border: none; cursor: pointer; transition: all 0.2s; color: var(--text-secondary); background: transparent; }
+  .tab-btn.active { background: var(--surface); box-shadow: 4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light); color: #2563eb; }
+
+  /* SOS View */
+  .sos-bg { background: linear-gradient(160deg, #0f2447 0%, #1a3a6b 40%, #1e4d8c 100%); min-height: 100vh; }
+  .sos-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; }
+  .sos-button { background: linear-gradient(135deg, #dc2626, #991b1b); border-radius: 20px; box-shadow: 0 0 30px #dc262666, 0 8px 24px #7f1d1d88; border: 2px solid #ef4444; cursor: pointer; transition: all 0.2s; font-family: 'Sora', sans-serif; animation: pulse-red 2s infinite; }
+  .sos-button:active { transform: scale(0.96); }
+  @keyframes pulse-red { 0%,100% { box-shadow: 0 0 30px #dc262666, 0 8px 24px #7f1d1d88; } 50% { box-shadow: 0 0 55px #dc2626cc, 0 12px 32px #7f1d1daa; } }
+
+  .avatar-ring { padding: 4px; background: conic-gradient(#3b82f6, #60a5fa, #2563eb, #1d4ed8, #3b82f6); border-radius: 50%; animation: spin-ring 4s linear infinite; }
+  @keyframes spin-ring { to { transform: rotate(360deg); } }
+
+  .info-pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 14px 16px; }
+  .info-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 1px; }
+  .info-value { font-size: 15px; font-weight: 600; color: #fff; margin-top: 3px; }
+  .blood-badge { background: linear-gradient(135deg, #dc2626, #7f1d1d); border-radius: 12px; padding: 8px 16px; font-size: 18px; font-weight: 800; color: white; box-shadow: 0 4px 16px #dc262666; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(13,32,64,0.7); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--surface); box-shadow: 16px 16px 40px #8fa8c4, -16px -16px 40px #eef4fc; border-radius: 24px; padding: 32px; text-align: center; max-width: 320px; width: 90%; animation: modal-in 0.3s ease; }
+  @keyframes modal-in { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* Animations */
+  @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fade-up 0.5s ease forwards; }
+  .d1 { animation-delay:.1s; opacity:0; } .d2 { animation-delay:.2s; opacity:0; } .d3 { animation-delay:.3s; opacity:0; } .d4 { animation-delay:.4s; opacity:0; }
+
+  /* Bottom Nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); box-shadow: 0 -4px 20px #b8c9de88; padding: 10px 0; z-index: 50; display: none; }
+  @media (max-width: 768px) { .bottom-nav { display: flex; } }
+
+  /* Upload */
+  .upload-area { border: 2px dashed #b8c9de; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .upload-area:hover { border-color: #2563eb; background: rgba(37,99,235,0.04); }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #b8c9de; border-radius: 3px; }
+  label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sec-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .sec-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  select.neu-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+  .search-wrap { position: relative; }
+  .search-wrap input { padding-left: 36px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+  
+  /* LIVE EVENT BANNER */
+  .event-banner { background: linear-gradient(90deg, #1e4d8c, #2563eb); color: white; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+
+  /* =========================================
+     ONLY ADDED CSS: MOBILE RESPONSIVE TABLE
+  ========================================= */
+  @media (max-width: 768px) {
+    .yatra-table thead { display: none; }
+    .yatra-table, .yatra-table tbody, .yatra-table tr, .yatra-table td { display: block; width: 100%; }
+    .yatra-table tr { 
+      margin-bottom: 20px; padding: 16px; background: var(--surface); 
+      border-radius: 16px; box-shadow: 4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light); 
+    }
+    .yatra-table td { 
+      padding: 10px 0; text-align: right; display: flex; align-items: center; 
+      justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .yatra-table td:last-child { border-bottom: none; }
+    .yatra-table td::before { 
+      content: attr(data-label); font-size: 11px; font-weight: 700; 
+      color: var(--text-muted); text-transform: uppercase; text-align: left;
+    }
+    .yatra-table td[data-label="Passenger"] { 
+      display: block; text-align: left; padding-bottom: 14px; 
+      border-bottom: 2px solid rgba(0,0,0,0.06); margin-bottom: 8px; 
+    }
+    .yatra-table td[data-label="Passenger"]::before { display: none; }
+    .yatra-table td[data-label="Actions"] { 
+      justify-content: center; margin-top: 10px; padding-top: 16px; border-top: 2px dashed rgba(0,0,0,0.08); 
+    }
+    .yatra-table td[data-label="Actions"]::before { display: none; }
+    .yatra-table td[data-label="Actions"] .flex { width: 100%; justify-content: space-around; gap: 8px; }
+    .yatra-table td[data-label="Actions"] button, .yatra-table td[data-label="Actions"] a { padding: 10px 14px; border-radius: 12px; flex: 1;}
+  }
+</style>
+</head>
+<body>
+
+<div id="view-admin" class="view active">
+
+  <header class="header-bar px-4 py-3 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="shield-icon">
+          <svg width="20" height="22" viewBox="0 0 20 22" fill="none">
+            <path d="M10 1L2 5v6c0 5.25 3.4 10.14 8 11.36C14.6 21.14 18 16.25 18 11V5L10 1z" fill="white" opacity="0.9"/>
+            <path d="M7 11l2 2 4-4" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="text-white font-bold text-lg leading-none tracking-tight">दिव्ययात्रा</div>
+          <div class="text-blue-300 text-xs font-medium mt-0.5">GOD IS GREAT</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="document.getElementById('groupContactsModal').classList.add('open')" class="neu-btn neu-btn-blue text-xs font-bold px-4 py-2 flex items-center gap-2 rounded-xl text-white">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          Group Contacts
+        </button>
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-lg cursor-pointer">A</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 pb-28">
+
+    <div class="tab-nav mb-6 fade-up">
+      <button class="tab-btn active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('passengers', this)">👥 Attendance</button>
+      <button class="tab-btn" onclick="switchTab('add', this)">➕ Add New</button>
+    </div>
+
+    <div id="tab-dashboard" class="tab-content">
+      
+      <div class="neu p-4 mb-5 fade-up flex flex-col sm:flex-row items-center justify-between gap-3 border-2 border-blue-500/20">
+        <div>
+          <div class="text-xs text-slate-500 uppercase font-bold">Viewing Stats For:</div>
+          <select id="dashEventSelector" class="neu-input font-bold text-blue-700 mt-1 bg-transparent shadow-none px-0" onchange="changeGlobalEvent(this.value)">
+            </select>
+        </div>
+        <button onclick="createNewEvent()" class="neu-btn neu-btn-blue text-xs px-4 py-2 font-bold rounded-lg shadow-md hover:shadow-lg transition-all">➕ Start New Event</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 mb-5">
+        <div class="stat-card fade-up d1">
+          <div class="stat-num text-blue-700" id="dash-total">0</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card fade-up d2">
+          <div class="stat-num text-green-600" id="dash-checked">0</div>
+          <div class="stat-label">Present</div>
+          <div class="progress-track mt-2" style="height:6px;"><div class="progress-fill" id="dash-progress-1" style="width:0%;background:linear-gradient(90deg,#16a34a,#4ade80);"></div></div>
+        </div>
+        <div class="stat-card fade-up d3">
+          <div class="stat-num text-amber-600" id="dash-pending">0</div>
+          <div class="stat-label">Absent</div>
+          <div class="progress-track mt-2" style="height:6px;"><div class="progress-fill" id="dash-progress-2" style="width:0%;background:linear-gradient(90deg,#d97706,#fbbf24);"></div></div>
+        </div>
+      </div>
+
+      <div class="neu p-5 mb-5 fade-up d4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <div class="sec-title" id="dash-event-title">Boarding Progress</div>
+            <div class="sec-sub">Live Attendance Status</div>
+          </div>
+          <div class="text-2xl font-bold text-blue-700" id="dash-percent">0%</div>
+        </div>
+        <div class="progress-track" style="height:12px;"><div class="progress-fill" id="dash-progress-main" style="width:0%;"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-400"><span id="dash-text-checked">0 present</span><span id="dash-text-pending">0 absent</span></div>
+      </div>
+
+      <div class="neu p-5 mb-5 fade-up d4">
+        <div class="sec-title mb-4">Group-wise Reports</div>
+        <div id="group-stats-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div class="text-xs text-slate-400">Loading groups...</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="switchTab('add', document.querySelectorAll('.tab-btn')[2])" class="neu-sm p-4 text-left cursor-pointer hover:scale-[1.01] transition-transform">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#2563eb"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          </div>
+          <div class="font-semibold text-sm">Add Passenger</div>
+          <div class="text-xs text-slate-400 mt-0.5">Register new member</div>
+        </button>
+        <button onclick="switchTab('passengers', document.querySelectorAll('.tab-btn')[1])" class="neu-sm p-4 text-left cursor-pointer hover:scale-[1.01] transition-transform">
+          <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mb-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          <div class="font-semibold text-sm">Attendance List</div>
+          <div class="text-xs text-slate-400 mt-0.5">Mark Present</div>
+        </button>
+      </div>
+    </div>
+
+    <div id="tab-passengers" class="tab-content hidden">
+      
+      <div class="event-banner mb-4">
+        <div>
+          <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider mb-0.5 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Live Tracking Mode
+          </div>
+          <div class="text-lg font-bold" id="tracking-event-name">General Boarding</div>
+        </div>
+        <select id="listEventSelector" class="bg-white/20 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-bold outline-none cursor-pointer" onchange="changeGlobalEvent(this.value)">
+          </select>
+      </div>
+
+      <div class="neu p-4 mb-4">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="search-wrap flex-1">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input class="neu-input" id="searchInput" placeholder="Search name or PNR…" oninput="applyFilters()">
+          </div>
+          
+          <select class="neu-input" id="groupFilter" style="max-width:160px;" onchange="applyFilters()">
+            </select>
+
+          <select class="neu-input" id="statusFilter" style="max-width:160px;" onchange="applyFilters()">
+            <option value="all">All Status</option>
+            <option value="present">Present</option>
+            <option value="pending">Absent (Pending)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="neu p-4">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="sec-title">Passenger List</div>
+            <div class="sec-sub" id="count-label">Loading...</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="yatra-table" id="passengerTable">
+            <thead>
+              <tr>
+                <th>Passenger</th>
+                <th class="hidden sm:table-cell">PNR</th>
+                <th>Group</th>
+                <th>Blood</th>
+                <th>Status</th>
+                <th>Present</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-add" class="tab-content hidden">
+      <div class="neu p-5 mb-5">
+        <div class="sec-title mb-1">Register New Passenger</div>
+        <div class="sec-sub mb-5">Fill all details to generate QR badge</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label>Full Name *</label><input class="neu-input" id="inp-name" placeholder="e.g. Priya Sharma"></div>
+          <div><label>Age *</label><input class="neu-input" type="number" id="inp-age" placeholder="e.g. 34"></div>
+          
+          <div>
+            <label>Group (A to Z) *</label>
+            <select class="neu-input" id="inp-group">
+              </select>
+          </div>
+
+          <div>
+            <label>Blood Group *</label>
+            <select class="neu-input" id="inp-blood">
+              <option value="">Select Blood Group</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+          <div><label>Emergency Contact *</label><input class="neu-input" type="tel" id="inp-contact" placeholder="+91 98765 43210"></div>
+<div><label>Train PNR / Ticket ID *</label><input class="neu-input mono" id="inp-pnr" placeholder="e.g. 1234567890-S1-45" oninput="formatPNR(event)"></div>          <div class="sm:col-span-2"><label>Medical Condition (optional)</label><input class="neu-input" id="inp-medical" placeholder="Diabetes, Asthma…"></div>
+          
+          <div>
+            <label>Passenger Photo</label>
+            <div class="upload-area" style="cursor: default;">
+              <input type="file" id="photoGallery" accept="image/*" class="hidden" onchange="processFile(this, 'photo')">
+              <input type="file" id="photoCamera" accept="image/*" capture="environment" class="hidden" onchange="processFile(this, 'photo')">
+              
+              <div id="photo-preview" class="flex flex-col items-center gap-2">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="#94a3b8"><path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                <div class="text-sm text-slate-400 mb-1">Face Photo</div>
+                <div class="flex gap-2">
+                  <button type="button" onclick="document.getElementById('photoCamera').click()" class="neu-btn neu-btn-blue px-3 py-1.5 text-xs flex items-center gap-1 rounded-lg shadow-sm">📸 Camera</button>
+                  <button type="button" onclick="document.getElementById('photoGallery').click()" class="neu-btn px-3 py-1.5 text-xs flex items-center gap-1 rounded-lg text-blue-700" style="border: 1px solid #94a3b8;">🖼️ Gallery</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label>Aadhaar Card Photo</label>
+            <div class="upload-area" style="cursor: default;">
+              <input type="file" id="aadhaarGallery" accept="image/*" class="hidden" onchange="processFile(this, 'aadhaar')">
+              <input type="file" id="aadhaarCamera" accept="image/*" capture="environment" class="hidden" onchange="processFile(this, 'aadhaar')">
+              
+              <div id="aadhaar-preview" class="flex flex-col items-center gap-2">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="#94a3b8"><path d="M3 4h18v16H3V4zm2 2v12h14V6H5zm3 3h8v2H8V9zm0 4h5v2H8v-2z"/></svg>
+                <div class="text-sm text-slate-400 mb-1">ID Proof (Aadhaar)</div>
+                <div class="flex gap-2">
+                  <button type="button" onclick="document.getElementById('aadhaarCamera').click()" class="neu-btn neu-btn-blue px-3 py-1.5 text-xs flex items-center gap-1 rounded-lg shadow-sm">📸 Camera</button>
+                  <button type="button" onclick="document.getElementById('aadhaarGallery').click()" class="neu-btn px-3 py-1.5 text-xs flex items-center gap-1 rounded-lg text-blue-700" style="border: 1px solid #94a3b8;">🖼️ Gallery</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        
+        <div class="mt-6 flex gap-3">
+          <button onclick="addPassenger()" class="neu-btn neu-btn-blue flex-1 py-3 font-bold text-sm flex items-center justify-center gap-2 rounded-xl">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            <span id="save-btn-text">Save & Generate QR</span>
+          </button>
+          <button onclick="clearForm()" class="neu-btn py-3 px-5 text-sm font-semibold text-slate-500 rounded-xl">Clear</button>
+        </div>
+      </div>
+
+      <div class="neu p-5 hidden" id="live-qr-section">
+        <div class="sec-title mb-1">QR Badge Preview</div>
+        <div class="sec-sub mb-4">Generated Badge will appear here</div>
+        <div class="flex flex-col sm:flex-row items-center gap-5">
+          <div class="neu-sm p-4 flex flex-col items-center gap-3" style="min-width:155px;">
+            <div id="qr-preview-box"></div>
+            <div class="text-xs font-bold text-slate-600 mono" id="preview-pnr">PNR: —</div>
+            <div class="flex gap-2 w-full mt-2">
+              <button onclick="downloadFile('png')" class="neu-btn neu-btn-blue text-xs py-2 px-2 font-bold flex-1 rounded-lg">⬇ Image</button>
+              <button onclick="downloadFile('svg')" class="neu-btn text-xs py-2 px-2 font-bold flex-1 rounded-lg" style="color: #2563eb; border: 1px solid #2563eb;">⬇ Vector</button>
+            </div>
+          </div>
+          <div class="flex-1 space-y-2 w-full">
+            <div class="neu-inset p-3"><div class="text-xs text-slate-400 uppercase font-semibold mb-1">Passenger</div><div class="font-bold text-slate-700" id="preview-name">—</div></div>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="neu-inset p-2 text-center"><div class="text-xs text-slate-400">Age</div><div class="font-bold text-slate-700" id="preview-age">—</div></div>
+              <div class="neu-inset p-2 text-center"><div class="text-xs text-slate-400">Blood</div><div class="font-bold text-red-600" id="preview-blood">—</div></div>
+              <div class="neu-inset p-2 text-center"><div class="text-xs text-slate-400">Group</div><div class="font-bold text-slate-700 mono" id="preview-group">—</div></div>
+            </div>
+            <div class="neu-inset p-3"><div class="text-xs text-slate-400 uppercase font-semibold mb-1">Emergency</div><div class="font-semibold text-slate-700 mono text-sm" id="preview-contact">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <nav class="bottom-nav justify-around">
+    <button onclick="switchTab('dashboard', null)" class="flex flex-col items-center gap-1 p-2 text-blue-600">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      <span class="text-xs font-semibold">Dashboard</span>
+    </button>
+    <button onclick="switchTab('passengers', null)" class="flex flex-col items-center gap-1 p-2 text-slate-400">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span class="text-xs font-semibold">Passengers</span>
+    </button>
+    <button onclick="switchTab('add', null)" class="flex flex-col items-center gap-1 p-2 text-slate-400">
+      <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center -mt-5 shadow-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      </div>
+      <span class="text-xs font-semibold mt-1">Add</span>
+    </button>
+  </nav>
+</div>
+
+<div id="groupContactsModal" class="modal-overlay">
+  <div class="modal-box" style="text-align:left; max-width: 400px; padding: 20px;">
+    <div class="flex items-center justify-between mb-4">
+      <div class="sec-title">📞 Group Admins</div>
+      <button onclick="document.getElementById('groupContactsModal').classList.remove('open')" class="text-slate-400 font-bold text-xl cursor-pointer">&times;</button>
+    </div>
+    <div class="text-xs text-slate-500 mb-4">Set emergency phone numbers for each group. When a QR is scanned, the SOS button will directly dial the respective admin.</div>
+    
+    <div style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+      <table class="yatra-table" style="width: 100%;">
+        <thead><tr><th>Group</th><th>Admin Phone Number</th></tr></thead>
+        <tbody id="contactsTableBody">
+          </tbody>
+      </table>
+    </div>
+    
+    <button onclick="saveGroupContacts()" class="neu-btn neu-btn-blue w-full py-3 mt-4 text-sm font-bold rounded-xl">Save to Cloud</button>
+  </div>
+</div>
+
+<div id="qrModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="sec-title text-center mb-0.5">QR Badge</div>
+    <div class="text-xs text-slate-400 text-center mb-4" id="modal-pnr">PNR: —</div>
+    <div id="modal-qr" class="flex justify-center mb-4"></div>
+    <div class="font-semibold text-slate-700 text-center mb-0.5" id="modal-name">—</div>
+    
+    <div class="text-xs text-slate-400 text-center mb-5" id="modal-info">—</div>
+    
+    <div class="flex gap-2 w-full mb-3">
+      <button onclick="downloadModalQR('png')" class="neu-btn neu-btn-blue flex-1 py-2.5 text-sm font-bold rounded-xl">⬇ PNG</button>
+      <button onclick="downloadModalQR('svg')" class="neu-btn flex-1 py-2.5 text-sm font-bold rounded-xl" style="color: #2563eb; border: 1px solid #2563eb;">⬇ SVG</button>
+    </div>
+    
+    <button onclick="closeModal()" class="neu-btn w-full py-2.5 text-sm font-semibold text-slate-500 rounded-xl">Close</button>
+  </div>
+</div>
+
+<script>
+// --- Global Variables ---
+let currentEvent = 'General Boarding';
+let allEvents = ['General Boarding'];
+let currentPngUrl = '';
+let currentSvgUrl = '';
+let currentModalPnr = ''; 
+let passengers = [];
+let groupContacts = {}; 
+let currentEditId = null;
+
+// NAYA FILE TRACKER
+let filesData = { photo: null, aadhaar: null };
+
+const avatarColors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#65a30d'];
+const phoneIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`;
+const deleteIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`; 
+// ========================================================
+// 🔥 NAYA JAVASCRIPT: Auto-Format PNR (Smart Hyphen Logic)
+// ========================================================
+function formatPNR(e) {
+  let target = e.target;
+  // Ab hum hyphens (-) ko delete nahi karenge!
+  let val = target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''); 
+
+  // PNR kitna bada hai wo ginne ke liye hyphens hata kar check karenge
+  let pure = val.replace(/-/g, '');
+
+  if (pure.length <= 10) {
+    if (pure.length === 10 && e.inputType !== 'deleteContentBackward') {
+      target.value = pure + '-'; // 10 digit hote hi auto-hyphen
+    } else {
+      target.value = pure;
+    }
+  } else {
+    // Agar 10 se zyada hai, toh pehle 10 digit alag karo
+    let pnr = pure.substring(0, 10);
+    
+    // Uske baad user jo bhi type karega (S4-56), usko waisa hi rakhne do
+    let count = 0;
+    let cutIdx = val.length;
+    for (let i = 0; i < val.length; i++) {
+      if (val[i] !== '-') count++;
+      if (count === 10) {
+        cutIdx = i + 1;
+        break;
+      }
+    }
+    
+    let suffix = val.substring(cutIdx).replace(/^-+/, ''); 
+    target.value = pnr + '-' + suffix;
+  }
+}
+// ========================================================
+// --- Generate Group A to Z ---
+function generateGroupOptions() {
+  let filterHTML = '<option value="all">All Groups</option>';
+  let formHTML = '';
+  let contactsHTML = '';
+
+  for (let i = 0; i < 26; i++) {
+    let letter = String.fromCharCode(65 + i);
+    filterHTML += `<option value="${letter}">Group ${letter}</option>`;
+    formHTML += `<option value="${letter}">Group ${letter}</option>`;
+    
+    let savedNum = groupContacts[letter] || '';
+    contactsHTML += `
+      <tr>
+        <td class="font-bold text-slate-700">Group ${letter}</td>
+        <td><input type="tel" id="contact-grp-${letter}" value="${savedNum}" class="neu-input py-1.5 px-2" placeholder="e.g. 9876543210"></td>
+      </tr>
+    `;
+  }
+  document.getElementById('groupFilter').innerHTML = filterHTML;
+  document.getElementById('inp-group').innerHTML = formHTML;
+  document.getElementById('contactsTableBody').innerHTML = contactsHTML;
+}
+
+// --- SAVE CLOUD CONTACTS ---
+async function saveGroupContacts() {
+  let tempContacts = {};
+  for (let i = 0; i < 26; i++) {
+    let letter = String.fromCharCode(65 + i);
+    let val = document.getElementById(`contact-grp-${letter}`).value.trim();
+    if(val) tempContacts[letter] = val;
+  }
+  
+  try {
+    const res = await fetch('/api/save_group_contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tempContacts)
+    });
+    if(res.ok) {
+        groupContacts = tempContacts;
+        alert("Group Admins saved securely to Cloud! ☁️");
+        document.getElementById('groupContactsModal').classList.remove('open');
+        applyFilters(); 
+    } else {
+        alert("Failed to save to cloud.");
+    }
+  } catch(e) {
+      alert("Error connecting to server.");
+  }
+}
+
+// --- FETCH CLOUD CONTACTS ---
+async function loadGroupContactsFromCloud() {
+    try {
+        const res = await fetch('/api/get_group_contacts');
+        groupContacts = await res.json();
+        generateGroupOptions();
+    } catch (e) { 
+        console.error("Could not load group contacts"); 
+        generateGroupOptions(); 
+    }
+}
+
+// --- Extract JSON Events ---
+function extractEventsFromData() {
+  let eventsSet = new Set(['General Boarding']);
+  passengers.forEach(p => {
+    if (p.attendance_logs) {
+      Object.keys(p.attendance_logs).forEach(ev => eventsSet.add(ev));
+    }
+  });
+  allEvents = Array.from(eventsSet);
+  renderEventDropdowns();
+}
+
+function renderEventDropdowns() {
+  let options = allEvents.map(e => `<option value="${e}">${e}</option>`).join('');
+  document.getElementById('dashEventSelector').innerHTML = options;
+  document.getElementById('listEventSelector').innerHTML = options;
+  
+  document.getElementById('dashEventSelector').value = currentEvent;
+  document.getElementById('listEventSelector').value = currentEvent;
+  document.getElementById('dash-event-title').textContent = currentEvent + " Progress";
+  document.getElementById('tracking-event-name').textContent = currentEvent;
+}
+
+function changeGlobalEvent(newEvent) {
+  currentEvent = newEvent;
+  renderEventDropdowns();
+  applyFilters(); 
+}
+
+function createNewEvent() {
+  const newEv = prompt("Enter new Tracking Event name (e.g. 'Dinner Day 1'):");
+  if (newEv && newEv.trim() !== "") {
+    currentEvent = newEv.trim();
+    if (!allEvents.includes(currentEvent)) allEvents.push(currentEvent);
+    renderEventDropdowns();
+    applyFilters();
+    switchTab('passengers', document.querySelectorAll('.tab-btn')[1]); 
+  }
+}
+
+// --- Fetch DB Passengers ---
+async function loadPassengersFromCloud() {
+  try {
+    const response = await fetch('/api/get_passengers');
+    passengers = await response.json(); 
+    extractEventsFromData();
+    applyFilters(); 
+  } catch (error) {
+    console.error("Cloud se data nahi aaya:", error);
+  }
+}
+
+function getPassengerEventStatus(p) {
+  if (!p.attendance_logs) return 'pending';
+  return p.attendance_logs[currentEvent] === 'present' ? 'present' : 'pending';
+}
+
+// --- Dynamic Dashboard Stats ---
+function updateDashboardStats(data) {
+  const total = data.length;
+  const checked = data.filter(p => getPassengerEventStatus(p) === 'present').length;
+  const pending = total - checked;
+  const pct = total === 0 ? 0 : Math.round((checked / total) * 100);
+
+  document.getElementById('dash-total').textContent = total;
+  document.getElementById('dash-checked').textContent = checked;
+  document.getElementById('dash-pending').textContent = pending;
+  
+  document.getElementById('dash-percent').textContent = pct + '%';
+  document.getElementById('dash-progress-1').style.width = pct + '%';
+  document.getElementById('dash-progress-2').style.width = (100 - pct) + '%';
+  document.getElementById('dash-progress-main').style.width = pct + '%';
+
+  document.getElementById('dash-text-checked').textContent = checked + ' present';
+  document.getElementById('dash-text-pending').textContent = pending + ' absent';
+
+  const groupStats = {};
+  data.forEach(p => {
+    const g = p.group_name || 'Unassigned';
+    if (!groupStats[g]) groupStats[g] = { total: 0, present: 0, pending: 0 };
+    groupStats[g].total++;
+    if (getPassengerEventStatus(p) === 'present') groupStats[g].present++;
+    else groupStats[g].pending++;
+  });
+
+  const container = document.getElementById('group-stats-container');
+  container.innerHTML = '';
+  const sortedGroups = Object.keys(groupStats).sort();
+
+  if (sortedGroups.length === 0) {
+    container.innerHTML = '<div class="text-xs text-slate-400 col-span-3">No group data available yet.</div>';
+  } else {
+    sortedGroups.forEach(g => {
+      const st = groupStats[g];
+      const gPct = st.total === 0 ? 0 : (st.present / st.total) * 100;
+      container.innerHTML += `
+        <div class="neu-inset p-3 flex flex-col gap-1">
+          <div class="font-bold text-slate-700 text-sm flex items-center justify-between">
+            Group ${g}
+            <span class="badge ${gPct === 100 ? 'badge-green' : 'badge-yellow'} text-[9px] px-2 py-0.5">${st.total} People</span>
+          </div>
+          <div class="flex justify-between text-xs mt-1">
+            <span class="text-green-600 font-semibold">P: ${st.present}</span>
+            <span class="text-red-500 font-semibold">A: ${st.pending}</span>
+          </div>
+          <div class="progress-track mt-1" style="height:4px;">
+            <div class="progress-fill" style="width:${gPct}%;"></div>
+          </div>
+        </div>`;
+    });
+  }
+}
+
+// --- Table Renderer & MAGIC MOBILE VIEW DATA-LABELS ---
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  data.forEach((p, i) => {
+    const pBlood = p.blood_group || p.blood || '-';
+    const pGroup = p.group_name || '-';
+    const isPresent = getPassengerEventStatus(p) === 'present';
+    const pContact = groupContacts[p.group_name] || p.contact || '';
+    
+    let phoneAction = `href="tel:${pContact}"`;
+    if (!pContact || pContact.trim() === '') {
+      phoneAction = `href="javascript:void(0)" onclick="alert('No emergency contact number saved for ${p.name}!')"`;
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td data-label="Passenger">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+               style="background:${avatarColors[i % avatarColors.length]}">${(p.name || 'U').charAt(0)}</div>
+          <div>
+            <div class="font-semibold text-sm text-slate-700">${p.name}</div>
+            <div class="text-xs text-slate-400 mono sm:hidden">${p.pnr}</div>
+          </div>
+        </div>
+      </td>
+      <td data-label="PNR" class="hidden sm:table-cell"><span class="mono text-xs font-semibold text-slate-500">${p.pnr}</span></td>
+      <td data-label="Group"><span class="badge badge-purple">${pGroup}</span></td>
+      <td data-label="Blood"><span class="font-bold text-xs" style="color:#dc2626">${pBlood}</span></td>
+      <td data-label="Status">
+        <span class="badge ${isPresent ? 'badge-green' : 'badge-yellow'}">
+          <span class="badge-dot"></span>${isPresent ? 'Present' : 'Absent'}
+        </span>
+      </td>
+      <td data-label="Attendance">
+        <label class="toggle-wrap">
+          <input type="checkbox" class="toggle-input" ${isPresent ? 'checked' : ''} onchange="toggleStatus(${p.id}, this)">
+          <div class="toggle-slider"></div>
+        </label>
+      </td>
+      <td data-label="Actions">
+        <div class="flex items-center gap-1.5">
+          <button onclick="showQR(${p.id})" class="neu-btn p-2 text-blue-600" title="QR Code">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h-3v2h3v-2zm0 4h-3v2h3v-2zm2-4h-2v2h2v-2zm0 4h-2v2h2v-2zm-4-8h-2v2h2V9zm4 0h-2v2h2V9z"/></svg>
+          </button>
+          <button onclick="editPassenger(${p.id})" class="neu-btn p-2 text-slate-500" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button onclick="deletePassenger(${p.id}, '${p.name}')" class="neu-btn p-2 text-slate-500 hover:text-red-500 transition-colors" title="Delete">
+            ${deleteIcon}
+          </button>
+          <a ${phoneAction} class="neu-btn p-2 text-red-500 flex items-center justify-center" title="Call Emergency">
+            ${phoneIcon}
+          </a>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function applyFilters() {
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+  const groupFilter = document.getElementById('groupFilter')?.value || 'all';
+
+  const filtered = passengers.filter(p => {
+    const matchSearch = (p.name || '').toLowerCase().includes(q) || (p.pnr || '').includes(q);
+    const pStatus = getPassengerEventStatus(p);
+    const matchStatus = statusFilter === 'all' || pStatus === statusFilter;
+    const matchGroup = groupFilter === 'all' || p.group_name === groupFilter;
+    return matchSearch && matchStatus && matchGroup;
+  });
+  
+  renderTable(filtered);
+  document.getElementById('count-label').textContent = `Showing ${filtered.length} of ${passengers.length}`;
+  updateDashboardStats(passengers); 
+}
+
+async function toggleStatus(id, el) {
+  const p = passengers.find(x => x.id == id);
+  if (p) { 
+    if (!p.attendance_logs) p.attendance_logs = {};
+    const newStatus = el.checked ? 'present' : 'pending';
+    p.attendance_logs[currentEvent] = newStatus; 
+    applyFilters(); 
+
+    try {
+      await fetch('/api/update_status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id, event_name: currentEvent, status: newStatus })
+      });
+    } catch (err) {
+      console.error("Cloud status update failed", err);
+    }
+  }
+}
+
+// NAYA: DELETE PASSENGER LOGIC
+async function deletePassenger(id, name) {
+  if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return;
+  
+  try {
+    const res = await fetch('/api/delete_passenger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    });
+    
+    if (res.ok) {
+      passengers = passengers.filter(p => p.id != id);
+      applyFilters(); 
+    } else {
+      alert("Failed to delete passenger.");
+    }
+  } catch (e) {
+    alert("Error connecting to server.");
+  }
+}
+
+// --- FIXED: QR DOWNLOAD MODAL ---
+function showQR(id) {
+  const p = passengers.find(x => x.id == id); 
+  if (!p) return;
+  
+  currentModalPnr = p.pnr; 
+  const pBlood = p.blood_group || p.blood || 'Unknown';
+  
+  document.getElementById('modal-name').textContent = p.name;
+  document.getElementById('modal-pnr').textContent = `PNR: ${p.pnr}`;
+  document.getElementById('modal-info').textContent = `Age: ${p.age} • Blood: ${pBlood} • Group: ${p.group_name || '-'}`;
+  
+  const box = document.getElementById('modal-qr');
+  box.innerHTML = '';
+  const currentHost = window.location.origin;
+  new QRCode(box, { 
+    text: `${currentHost}/p/${p.pnr}`, 
+    width: 160, 
+    height: 160, 
+    colorDark: '#1a3a6b', 
+    colorLight: '#dde6f0' 
+  });
+  
+  document.getElementById('qrModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('qrModal').classList.remove('open'); }
+
+function downloadModalQR(type) {
+  if(!currentModalPnr) return;
+  window.location.href = `/download_qr/${type}/${currentModalPnr}`;
+}
+
+// --- FIXED: EDIT PASSENGER ---
+function editPassenger(id) {
+  const p = passengers.find(x => x.id == id); 
+  if (!p) return;
+  
+  currentEditId = p.id;
+  
+  document.getElementById('inp-name').value = p.name || '';
+  document.getElementById('inp-age').value = p.age || '';
+  document.getElementById('inp-group').value = p.group_name || 'A';
+  document.getElementById('inp-blood').value = p.blood_group || p.blood || '';
+  document.getElementById('inp-pnr').value = p.pnr || '';
+  document.getElementById('inp-contact').value = p.contact || '';
+  document.getElementById('inp-medical').value = p.medical || '';
+  
+  document.getElementById('save-btn-text').textContent = "Update & Generate QR";
+  
+  switchTab('add', document.querySelectorAll('.tab-btn')[2]);
+  window.scrollTo(0, 0);
+}
+
+// NAYA FILE PROCESSING (DUAL SUPPORT: PHOTO + AADHAAR)
+function processFile(input, type) {
+  if (!input.files || !input.files[0]) return;
+  filesData[type] = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById(`${type}-preview`).innerHTML = `
+      <img src="${e.target.result}" style="width:80px;height:80px;border-radius:12px;object-fit:cover;box-shadow:0 4px 12px #b8c9de;">
+      <div class="text-sm font-semibold text-green-600 mt-2">Selected ✓</div>
+      <button type="button" onclick="clearPhotoUI('${type}')" class="text-xs text-red-500 font-bold mt-1 cursor-pointer underline">Remove</button>`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function clearPhotoUI(type) {
+  filesData[type] = null;
+  if(type === 'photo') {
+    document.getElementById('photoGallery').value = ''; document.getElementById('photoCamera').value = '';
+    document.getElementById('photo-preview').innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="#94a3b8"><path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg><div class="text-sm text-slate-400 mb-1">Face Photo</div><div class="flex gap-2"><button type="button" onclick="document.getElementById('photoCamera').click()" class="neu-btn neu-btn-blue px-3 py-1.5 text-xs">📸 Camera</button><button type="button" onclick="document.getElementById('photoGallery').click()" class="neu-btn px-3 py-1.5 text-xs text-blue-700" style="border: 1px solid #94a3b8;">🖼️ Gallery</button></div>`;
+  } else {
+    document.getElementById('aadhaarGallery').value = ''; document.getElementById('aadhaarCamera').value = '';
+    document.getElementById('aadhaar-preview').innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="#94a3b8"><path d="M3 4h18v16H3V4zm2 2v12h14V6H5zm3 3h8v2H8V9zm0 4h5v2H8v-2z"/></svg><div class="text-sm text-slate-400 mb-1">ID Proof (Aadhaar)</div><div class="flex gap-2"><button type="button" onclick="document.getElementById('aadhaarCamera').click()" class="neu-btn neu-btn-blue px-3 py-1.5 text-xs">📸 Camera</button><button type="button" onclick="document.getElementById('aadhaarGallery').click()" class="neu-btn px-3 py-1.5 text-xs text-blue-700" style="border: 1px solid #94a3b8;">🖼️ Gallery</button></div>`;
+  }
+}
+
+// NAYA FORMDATA LOGIC 
+async function addPassenger() {
+  const name  = document.getElementById('inp-name').value.trim();
+  const age   = document.getElementById('inp-age').value;
+  const group = document.getElementById('inp-group').value;
+  const blood = document.getElementById('inp-blood').value;
+  const pnr   = document.getElementById('inp-pnr').value.trim();
+  const contact = document.getElementById('inp-contact').value;
+  const medical = document.getElementById('inp-medical').value;
+
+  if (!name || !age || !blood || !pnr) { alert('Please fill Name, Age, Blood Group and PNR.'); return; }
+
+  const formData = new FormData();
+  if (currentEditId) formData.append('id', currentEditId);
+  formData.append('name', name);
+  formData.append('age', age);
+  formData.append('group', group);
+  formData.append('blood', blood);
+  formData.append('pnr', pnr);
+  formData.append('contact', contact);
+  formData.append('medical', medical);
+
+  if (filesData.photo) formData.append('photo', filesData.photo);
+  if (filesData.aadhaar) formData.append('aadhaar', filesData.aadhaar);
+
+  try {
+    const response = await fetch('/api/add_passenger', { method: 'POST', body: formData });
+    const result = await response.json();
+
+    if (response.ok) {
+      alert(result.message); 
+      currentPngUrl = result.qr_url; currentSvgUrl = result.qr_svg_url;
+      document.getElementById('qr-preview-box').innerHTML = `<img src="${result.qr_url}" style="width:120px;border-radius:10px;">`;
+      document.getElementById('preview-pnr').textContent = `PNR: ${pnr}`;
+      document.getElementById('live-qr-section').classList.remove('hidden');
+      clearForm(); loadPassengersFromCloud(); 
+    } else {
+      alert("Error saving data!");
+    }
+  } catch (error) { alert("Backend connection error."); }
+}
+
+function downloadFile(type) {
+  let rawPnr = document.getElementById('preview-pnr').textContent.replace('PNR: ', '').trim();
+  if(!rawPnr) return;
+  window.location.href = `/download_qr/${type}/${rawPnr}`;
+}
+
+function clearForm() {
+  currentEditId = null; 
+  document.getElementById('save-btn-text').textContent = "Save & Generate QR";
+  ['inp-name','inp-age','inp-pnr','inp-contact','inp-medical'].forEach(id => { document.getElementById(id).value = ''; });
+  clearPhotoUI('photo'); clearPhotoUI('aadhaar');
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) { btn.classList.add('active'); }
+  else {
+    const map = { dashboard: 0, passengers: 1, add: 2 };
+    if (map[name] !== undefined) document.querySelectorAll('.tab-btn')[map[name]]?.classList.add('active');
+  }
+}
+
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+}
+
+document.getElementById('qrModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('groupContactsModal').addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+
+document.addEventListener('DOMContentLoaded', async () => {
+  clearPhotoUI('photo'); clearPhotoUI('aadhaar');
+  await loadGroupContactsFromCloud(); 
+  await loadPassengersFromCloud(); 
+});
+</script>
+</body>
+</html>

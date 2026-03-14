@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOS Profile - {{ p.name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Sora', sans-serif; background: linear-gradient(160deg, #0f2447 0%, #1a3a6b 40%, #1e4d8c 100%); min-height: 100vh; padding-bottom: 40px;}
+  .sos-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; padding: 20px;}
+  
+  /* Red SOS Button Styling */
+  .sos-button { background: linear-gradient(135deg, #dc2626, #991b1b); border-radius: 20px; box-shadow: 0 0 30px #dc262666, 0 8px 24px #7f1d1d88; border: 2px solid #ef4444; cursor: pointer; transition: all 0.2s; animation: pulse-red 2s infinite; text-align: center; display: block; text-decoration: none;}
+  .sos-button:active { transform: scale(0.96); }
+  @keyframes pulse-red { 0%,100% { box-shadow: 0 0 30px #dc262666; } 50% { box-shadow: 0 0 55px #dc2626cc; } }
+  
+  /* Disabled SOS Button (Agar admin number nahi hai toh) */
+  .sos-disabled { background: linear-gradient(135deg, #475569, #334155); border-color: #64748b; box-shadow: none; animation: none; opacity: 0.8; cursor: not-allowed; }
+
+  .avatar-ring { padding: 4px; background: conic-gradient(#3b82f6, #60a5fa, #2563eb, #1d4ed8, #3b82f6); border-radius: 50%; animation: spin-ring 4s linear infinite; }
+  @keyframes spin-ring { to { transform: rotate(360deg); } }
+  
+  .info-pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 14px 16px; }
+  .info-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 1px; }
+  .info-value { font-size: 15px; font-weight: 600; color: #fff; margin-top: 3px; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .blood-badge { background: linear-gradient(135deg, #dc2626, #7f1d1d); border-radius: 12px; padding: 8px 16px; font-size: 18px; font-weight: 800; color: white; box-shadow: 0 4px 16px #dc262666; }
+</style>
+</head>
+<body>
+
+  <div class="max-w-sm mx-auto px-4 py-8">
+    
+    <div class="sos-card mb-4 text-center">
+      <div class="flex flex-col items-center gap-3">
+        
+        <div class="avatar-ring" style="width:108px;height:108px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;background:#1a3a6b;display:flex;align-items:center;justify-content:center;">
+            {% if p.photo_path %}
+              <img src="{{ p.photo_path }}" alt="Passenger Photo" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+              <span class="text-4xl font-bold text-white">{{ p.name[0].upper() }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div>
+          <div class="text-white font-bold text-2xl">{{ p.name }}</div>
+          <div class="text-blue-300 text-sm mt-0.5">Age: {{ p.age }} • Group {{ p.group_name }}</div>
+        </div>
+        <div class="flex gap-2">
+          <span class="blood-badge">{{ p.blood_group }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% if admin_phone %}
+      <a href="tel:{{ admin_phone }}" class="sos-button w-full py-5 mb-4">
+        <div class="flex items-center justify-center gap-3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+          <span class="text-white font-black text-xl tracking-wide">CALL ORGANIZER</span>
+        </div>
+        <div class="text-red-200 text-xs font-medium mt-1">Tap to alert Group {{ p.group_name }} Admin</div>
+      </a>
+    {% else %}
+      <a href="javascript:void(0)" onclick="alert('Admin contact for Group {{ p.group_name }} is not set by the organizer.')" class="sos-button sos-disabled w-full py-5 mb-4">
+        <div class="flex items-center justify-center gap-3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+          <span class="text-white font-black text-xl tracking-wide">CALL ORGANIZER</span>
+        </div>
+        <div class="text-slate-300 text-xs font-medium mt-1">No number saved for Group {{ p.group_name }}</div>
+      </a>
+    {% endif %}
+
+    {% if p.aadhaar_path %}
+    <div class="sos-card mb-4 p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-white font-bold text-sm uppercase tracking-wider">🏛️ Govt. ID Proof (Aadhaar)</span>
+      </div>
+      <div style="width: 100%; height: 200px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2);">
+        <img src="{{ p.aadhaar_path }}" style="width: 100%; height: 100%; object-fit: cover;" onclick="window.open(this.src, '_blank')">
+      </div>
+      <div class="text-center text-[10px] text-slate-400 mt-2">Tap image to view full size</div>
+    </div>
+    {% endif %}
+
+    <div class="sos-card mb-4 p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-white font-bold text-sm uppercase tracking-wider">🚨 Medical & Safety</span>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="info-pill col-span-2">
+          <div class="info-label">Medical Condition / Allergy</div>
+          <div class="info-value" style="color:#fca5a5;">{{ p.medical or 'None Declared' }}</div>
+        </div>
+        <div class="info-pill col-span-2">
+          <div class="info-label">Personal Emergency Contact</div>
+          <div class="info-value mono">
+            <a href="tel:{{ p.contact }}" style="color: #60a5fa; text-decoration: underline;">{{ p.contact }}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sos-card p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-white font-bold text-sm uppercase tracking-wider">🚆 Travel Info</span>
+      </div>
+      <div class="info-pill">
+        <div class="info-label">Train PNR</div>
+        <div class="info-value mono">{{ p.pnr }}</div>
+      </div>
+    </div>
+
+    <div class="text-center mt-6 text-[11px] text-blue-300/50">
+      Secured by दिव्ययात्रा   • PNR: {{ p.pnr }}
+    </div>
+  </div>
+
+</body>
+</html>
