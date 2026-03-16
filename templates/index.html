@@ -947,8 +947,8 @@ async function addPassenger() {
     let aadhaarPromise = null;
 
     // Dono processing ek saath start karo
-    if (filesData.photo) facePromise = compressImage(filesData.photo, 1000, 0.85);
-    if (filesData.aadhaar) aadhaarPromise = compressImage(filesData.aadhaar, 1500, 0.90);
+    if (filesData.photo) facePromise = compressImage(filesData.photo, 900, 0.82);
+    if (filesData.aadhaar) aadhaarPromise = compressImage(filesData.aadhaar, 1200, 0.88);
 
     // Dono ke khatam hone ka ek hi baar wait karo
     const [compressedFace, compressedAadhaar] = await Promise.all([facePromise, aadhaarPromise]);
