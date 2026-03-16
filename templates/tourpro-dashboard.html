@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>दिव्ययात्रा — Tour Organizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ── */
+:root {
+  --bg:        #dde6f0;
+  --sur:       #dde6f0;
+  --nl:        #eef4fc;
+  --nd:        #b8c9de;
+  --navy:      #1a3a6b;
+  --navym:     #1e4d8c;
+  --blue:      #2563eb;
+  --bluel:     #3b82f6;
+  --green:     #059669;
+  --amber:     #b45309;
+  --rose:      #be123c;
+  --t1:        #1e293b;
+  --t2:        #475569;
+  --t3:        #94a3b8;
+  --sw:        220px;
+  --hh:        60px;
+  --r:         14px;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { overflow-x:hidden; }
+body {
+  font-family:'Sora',sans-serif;
+  background:var(--bg);
+  color:var(--t1);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--nd); border-radius:4px; }
+.mono { font-family:'JetBrains Mono',monospace; }
+
+/* ── Neu Helpers ── */
+.neu  { background:var(--sur); box-shadow: 7px 7px 16px var(--nd),-7px -7px 16px var(--nl); border-radius:var(--r); }
+.nusm { background:var(--sur); box-shadow: 4px 4px 10px var(--nd),-4px -4px 10px var(--nl); border-radius:12px; }
+.nuxs { background:var(--sur); box-shadow: 3px 3px 7px var(--nd),-3px -3px 7px var(--nl); border-radius:9px; }
+.nuin { background:var(--sur); box-shadow:inset 3px 3px 8px var(--nd),inset -3px -3px 8px var(--nl); border-radius:10px; }
+.nuinsm { background:var(--sur); box-shadow:inset 2px 2px 5px var(--nd),inset -2px -2px 5px var(--nl); border-radius:8px; }
+
+/* ── Buttons ── */
+.btn {
+  font-family:'Sora',sans-serif; font-weight:600; border:none; cursor:pointer;
+  border-radius:11px; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  transition:all .15s ease; background:var(--sur);
+  box-shadow:4px 4px 10px var(--nd),-4px -4px 10px var(--nl);
+}
+.btn:active { box-shadow:inset 2px 2px 6px var(--nd),inset -2px -2px 6px var(--nl); transform:scale(.98); }
+.btn-blue {
+  background:linear-gradient(135deg,var(--blue),#1d4ed8); color:#fff;
+  box-shadow:5px 5px 12px var(--nd),-2px -2px 8px var(--nl),0 4px 18px rgba(37,99,235,.3);
+}
+.btn-blue:active { box-shadow:inset 3px 3px 8px #1a3a9e,inset -3px -3px 8px #4080ff; }
+.btn-ghost { color:var(--t2); font-size:13px; padding:8px 14px; }
+.btn-ghost:hover { color:var(--t1); }
+.btn-sm { padding:8px 14px; font-size:13px; }
+.btn-xs { padding:6px 11px; font-size:12px; border-radius:8px; }
+
+/* ── Inputs ── */
+.inp {
+  width:100%; background:var(--sur); border:none; border-radius:10px; outline:none;
+  box-shadow:inset 3px 3px 8px var(--nd),inset -3px -3px 8px var(--nl);
+  padding:11px 13px; font-family:'Sora',sans-serif; font-size:14px; color:var(--t1);
+  transition:box-shadow .2s;
+}
+.inp::placeholder { color:var(--t3); }
+.inp:focus { box-shadow:inset 3px 3px 8px var(--nd),inset -3px -3px 8px var(--nl),0 0 0 2px rgba(37,99,235,.3); }
+select.inp { appearance:none; cursor:pointer; background-color:var(--sur);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center; }
+.iw { position:relative; }
+.iw .ic { position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; }
+.iw .inp { padding-left:36px; }
+.lbl { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--t2); margin-bottom:6px; }
+
+/* ── Badges ── */
+.bdg { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700; }
+.bdg::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.bdg-p  { background:rgba(5,150,105,.1);  color:var(--green); }
+.bdg-p::before  { background:var(--green); box-shadow:0 0 4px var(--green); }
+.bdg-t  { background:rgba(180,83,9,.1);   color:var(--amber); }
+.bdg-t::before  { background:var(--amber); }
+.bdg-n  { background:rgba(190,18,60,.1);  color:var(--rose); }
+.bdg-n::before  { background:var(--rose); }
+
+/* ── Progress ── */
+.ptr { background:var(--sur); box-shadow:inset 2px 2px 5px var(--nd),inset -2px -2px 5px var(--nl); border-radius:99px; overflow:hidden; }
+.pfl { height:100%; border-radius:99px; transition:width 1.2s cubic-bezier(.16,1,.3,1); }
+
+/* ── Views ── */
+.view { display:none; }
+.view.active { display:block; }
+
+/* ══════════════════════════
+   LOGIN
+══════════════════════════ */
+.login-page {
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(37,99,235,.13) 0%, transparent 65%), var(--bg);
+}
+.login-card {
+  width:100%; max-width:420px;
+  background:var(--sur);
+  box-shadow:18px 18px 44px var(--nd),-18px -18px 44px var(--nl);
+  border-radius:24px; padding:36px 32px;
+  animation:rise .6s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes rise { from{opacity:0;transform:translateY(30px) scale(.97)} to{opacity:1;transform:none} }
+.login-logo {
+  width:52px; height:52px; border-radius:15px; margin:0 auto 18px;
+  background:linear-gradient(135deg,var(--navy),var(--navym));
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:5px 5px 14px var(--nd),-3px -3px 10px var(--nl);
+}
+.sep { height:1px; background:linear-gradient(90deg,transparent,var(--nd),transparent); margin:20px 0; }
+
+/* ══════════════════════════
+   LAYOUT
+══════════════════════════ */
+.layout { display:flex; min-height:100vh; }
+
+/* Sidebar */
+.sb {
+  width:var(--sw); flex-shrink:0;
+  background:var(--sur); box-shadow:5px 0 18px var(--nd);
+  position:fixed; inset:0 auto 0 0; z-index:50;
+  display:flex; flex-direction:column;
+  transition:transform .28s cubic-bezier(.16,1,.3,1);
+}
+.sb-head { padding:18px; box-shadow:0 3px 8px var(--nd); flex-shrink:0; }
+.sb-logo { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,var(--navy),var(--navym)); display:flex; align-items:center; justify-content:center; box-shadow:3px 3px 7px var(--nd),-2px -2px 5px var(--nl); }
+.nav-lbl { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--t3); padding:14px 18px 5px; }
+.ni { display:flex; align-items:center; gap:10px; padding:9px 13px; margin:2px 9px; border-radius:11px; font-size:13px; font-weight:500; color:var(--t2); cursor:pointer; transition:all .15s; border:1px solid transparent; }
+.ni:hover { box-shadow:3px 3px 7px var(--nd),-3px -3px 7px var(--nl); color:var(--t1); }
+.ni.on { box-shadow:4px 4px 9px var(--nd),-4px -4px 9px var(--nl); color:var(--blue); border-color:rgba(37,99,235,.18); font-weight:600; }
+
+/* Main */
+.main { margin-left:var(--sw); flex:1; display:flex; flex-direction:column; min-width:0; }
+.topbar {
+  height:var(--hh); padding:0 22px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--sur); box-shadow:0 4px 12px var(--nd);
+  position:sticky; top:0; z-index:30;
+}
+.pg-title { font-size:16px; font-weight:800; color:var(--navy); letter-spacing:-.3px; }
+.page-body { padding:22px; flex:1; min-width:0; overflow-x:hidden; }
+
+/* Sections */
+.sec { display:none; }
+.sec.on { display:block; }
+
+/* Overlay */
+.ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:45; backdrop-filter:blur(4px); }
+.ov.on { display:block; }
+
+/* ── Stat Cards ── */
+.sc {
+  background:var(--sur); border-radius:18px; padding:20px;
+  box-shadow:7px 7px 18px var(--nd),-7px -7px 18px var(--nl);
+  transition:transform .2s, box-shadow .2s;
+  position:relative; overflow:hidden;
+}
+.sc:hover { transform:translateY(-2px); box-shadow:10px 10px 24px var(--nd),-10px -10px 24px var(--nl); }
+.sc::after { content:''; position:absolute; top:-24px; right:-24px; width:80px; height:80px; border-radius:50%; opacity:.07; }
+.sc-b::after{background:var(--blue)} .sc-g::after{background:var(--green)} .sc-a::after{background:var(--amber)} .sc-r::after{background:var(--rose)}
+.si { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; box-shadow:3px 3px 8px var(--nd),-3px -3px 8px var(--nl); background:var(--sur); }
+.sv { font-size:26px; font-weight:800; letter-spacing:-1px; line-height:1; }
+.sl { font-size:11px; font-weight:500; color:var(--t3); margin-top:5px; text-transform:uppercase; letter-spacing:.05em; }
+.sf { font-size:11px; font-weight:600; margin-top:10px; display:flex; align-items:center; gap:3px; }
+
+/* ── Table: mobile-safe card rows ── */
+.data-table { width:100%; border-collapse:separate; border-spacing:0 6px; }
+.data-table thead th { padding:8px 12px; font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.07em; text-align:left; white-space:nowrap; }
+.data-table tbody tr { background:var(--sur); box-shadow:4px 4px 10px var(--nd),-4px -4px 10px var(--nl); transition:box-shadow .15s, transform .15s; }
+.data-table tbody tr:hover { box-shadow:6px 6px 14px var(--nd),-6px -6px 14px var(--nl); transform:translateY(-1px); }
+.data-table tbody td { padding:11px 12px; font-size:13px; vertical-align:middle; }
+.data-table tbody td:first-child { border-radius:11px 0 0 11px; }
+.data-table tbody td:last-child  { border-radius:0 11px 11px 0; }
+
+/* ── Mobile passenger card view ── */
+.p-card {
+  background:var(--sur); border-radius:14px; padding:16px;
+  box-shadow:5px 5px 12px var(--nd),-5px -5px 12px var(--nl);
+  margin-bottom:10px; transition:transform .15s;
+}
+.p-card:active { transform:scale(.99); }
+
+/* ── Form ── */
+.fsec-title {
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--t3);
+  padding-bottom:11px; margin-bottom:16px;
+  background:linear-gradient(90deg,var(--nd),transparent) bottom / 100% 1px no-repeat;
+}
+
+/* ── Toast ── */
+.toast {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999;
+  background:var(--sur); box-shadow:8px 8px 20px var(--nd),-8px -8px 20px var(--nl);
+  border-radius:12px; padding:12px 18px;
+  font-size:13px; font-weight:500; color:var(--t1);
+  display:flex; align-items:center; gap:9px; white-space:nowrap;
+  animation:tin .35s cubic-bezier(.16,1,.3,1) both;
+  max-width:calc(100vw - 32px);
+  overflow:hidden; text-overflow:ellipsis;
+}
+@keyframes tin { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+.tdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+/* ── Animations ── */
+@keyframes fu { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+@keyframes fpop { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:none} }
+.fu  { animation:fu .4s cubic-bezier(.16,1,.3,1) both; }
+.d1{animation-delay:.05s;opacity:0} .d2{animation-delay:.10s;opacity:0}
+.d3{animation-delay:.15s;opacity:0} .d4{animation-delay:.20s;opacity:0} .d5{animation-delay:.25s;opacity:0}
+
+/* ══════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════ */
+@media (min-width:860px) {
+  .mob-only { display:none !important; }
+  .desk-only { display:table-cell !important; }
+  #sb-toggle { display:none !important; }
+}
+
+@media (max-width:859px) {
+  :root { --sw:240px; }
+  .sb { transform:translateX(-100%); }
+  .sb.open { transform:translateX(0); }
+  .main { margin-left:0 !important; }
+  .page-body { padding:14px; padding-bottom:80px; }
+  .topbar { padding:0 14px; }
+  .desk-only { display:none !important; }
+
+  .bottom-nav {
+    display:flex !important;
+    position:fixed; bottom:0; left:0; right:0; z-index:40;
+    background:var(--sur); box-shadow:0 -4px 16px var(--nd);
+    padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+    justify-content:space-around; align-items:center;
+  }
+  .bn-item {
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:10px; font-weight:600; color:var(--t3); cursor:pointer; padding:4px;
+    transition:color .15s;
+  }
+  .bn-item.on { color:var(--blue); }
+  .bn-item svg { flex-shrink:0; }
+
+  #stat-grid { grid-template-columns:1fr 1fr !important; gap:12px !important; }
+  #desk-table { display:none !important; }
+  #mob-cards  { display:block !important; }
+  .form-grid { grid-template-columns:1fr !important; }
+  #reg-grid  { grid-template-columns:1fr !important; }
+  #preview-col { display:none !important; }
+}
+
+@media (min-width:860px) {
+  .bottom-nav { display:none; }
+  #desk-table { display:block; }
+  #mob-cards  { display:none; }
+}
+
+@media (max-width:380px) {
+  #stat-grid { grid-template-columns:1fr !important; }
+  .sv { font-size:22px; }
+}
+</style>
+</head>
+<body>
+
+<div id="view-login" class="view active">
+<div class="login-page">
+<div class="login-card">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div class="login-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity=".9"/>
+        <path d="M2 17l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <path d="M2 12l10 5 10-5" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+      </svg>
+    </div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--navy);margin-top:4px;">दिव्ययात्रा</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:3px;font-weight:500;">Tour Organizer Platform</div>
+  </div>
+
+  <div class="sep" style="margin-top:0;"></div>
+
+  <div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:3px;">Welcome back 👋</div>
+  <div style="font-size:12.5px;color:var(--t2);margin-bottom:22px;">Sign in to manage your tours</div>
+
+  <div style="margin-bottom:14px;">
+    <label class="lbl">Email Address</label>
+    <div class="iw">
+      <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span>
+      <input id="l-email" type="email" class="inp" placeholder="admin@divyayatra.in" value="admin@divyayatra.in">
+    </div>
+  </div>
+
+  <div style="margin-bottom:26px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <label class="lbl" style="margin:0;">Password</label>
+    </div>
+    <div class="iw">
+      <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
+      <input id="l-pass" type="password" class="inp" placeholder="••••••••" value="password">
+    </div>
+  </div>
+
+  <button class="btn btn-blue" style="width:100%;padding:14px;font-size:14px;border-radius:13px;" onclick="doLogin()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    Sign in to Dashboard
+  </button>
+
+  <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--t3);"> credentials filled ·click And Sign in</div>
+
+  <div class="sep"></div>
+  <div style="display:flex;justify-content:center;gap:18px;flex-wrap:wrap;">
+    <span style="font-size:11px;color:var(--t3);font-weight:500;display:flex;align-items:center;gap:4px;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> SSL Secured
+    </span>
+    <span style="font-size:11px;color:var(--t3);font-weight:500;display:flex;align-items:center;gap:4px;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg> GDPR Compliant
+    </span>
+    <span style="font-size:11px;color:var(--t3);font-weight:500;display:flex;align-items:center;gap:4px;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l3 3"/></svg> 99.9% Uptime
+    </span>
+  </div>
+</div>
+</div>
+</div>
+
+<div id="view-dashboard" class="view">
+
+  <div class="ov" id="ov" onclick="closeSB()"></div>
+
+  <aside class="sb" id="sb">
+    <div class="sb-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="sb-logo">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity=".9"/>
+            <path d="M2 17l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M2 12l10 5 10-5" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--navy);letter-spacing:-.3px;">दिव्ययात्रा</div>
+          <div style="font-size:10px;color:var(--t3);font-weight:500;">Organizer Platform</div>
+        </div>
+      </div>
+    </div>
+
+    <nav style="flex:1;overflow-y:auto;padding:10px 0;">
+      <div class="nav-lbl">Main</div>
+      <div class="ni on" id="ni-ov" onclick="goSec('ov',this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Overview
+      </div>
+      <div class="ni" id="ni-pas" onclick="goSec('pas',this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Passengers
+      </div>
+      <div class="ni" id="ni-add" onclick="goSec('add',this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+        Add Passenger
+      </div>
+
+      <div style="padding: 10px; margin-top: 15px; text-align: center;">
+         <a href="/" class="btn btn-blue btn-sm" style="text-decoration:none;">🔙 Back to Public Site</a>
+      </div>
+    </nav>
+
+    <div style="padding:12px;box-shadow:0 -3px 8px var(--nd);">
+      <button class="btn btn-ghost" style="width:100%;padding:10px 14px;display:flex;align-items:center;gap:8px;color:var(--rose);justify-content:center;" onclick="doLogout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="sb-toggle" class="btn btn-ghost" style="padding:8px;border-radius:9px;" onclick="openSB()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div id="pg-title" class="pg-title">Overview</div>
+      </div>
+      <button class="btn btn-blue btn-sm" onclick="goSec('add',document.getElementById('ni-add'))" style="padding:8px 14px;font-size:13px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="desk-only" style="display:inline;">New</span><span class="mob-only" style="display:none;">Add</span>
+      </button>
+    </header>
+
+    <div class="page-body">
+
+      <div id="sec-ov" class="sec on">
+        <div class="fu d1" style="margin-bottom:18px;">
+          <div style="font-size:19px;font-weight:800;color:var(--navy);letter-spacing:-.4px;">Good morning, Admin 👋</div>
+          <div style="font-size:13px;color:var(--t2);margin-top:3px;">Here's your tour snapshot today.</div>
+        </div>
+
+        <div id="stat-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+          <div class="sc sc-b fu d1" style="cursor:pointer;" onclick="goSec('pas',document.getElementById('ni-pas'))">
+            <div class="si"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+            <div class="sv" id="s-tot" style="color:var(--navy);">0</div>
+            <div class="sl">Passengers</div>
+            <div class="ptr" style="height:5px;margin-top:10px;"><div class="pfl" style="width:100%;background:var(--blue);"></div></div>
+            <div class="sf" style="color:var(--blue);">All registered</div>
+          </div>
+
+          <div class="sc sc-g fu d2">
+            <div class="si"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+            <div class="sv mono" id="s-rev" style="color:var(--green);">₹0</div>
+            <div class="sl">Collected</div>
+            <div class="ptr" style="height:5px;margin-top:10px;"><div class="pfl" id="pr-rev" style="background:var(--green);"></div></div>
+            <div class="sf" style="color:var(--green);"><span id="s-rpct">0%</span> of total</div>
+          </div>
+
+          <div class="sc sc-a fu d3">
+            <div class="si"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="sv mono" id="s-pend" style="color:var(--amber);">₹0</div>
+            <div class="sl">Pending Dues</div>
+            <div class="ptr" style="height:5px;margin-top:10px;"><div class="pfl" id="pr-pend" style="background:var(--amber);"></div></div>
+            <div class="sf" style="color:var(--amber);"><span id="s-pct">0</span> owing</div>
+          </div>
+
+          <div class="sc sc-r fu d4">
+            <div class="si"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+            <div class="sv" id="s-grp" style="color:var(--rose);">0</div>
+            <div class="sl">Groups</div>
+            <div class="ptr" style="height:5px;margin-top:10px;"><div class="pfl" style="width:70%;background:var(--rose);"></div></div>
+            <div class="sf" style="color:var(--rose);">Active tours</div>
+          </div>
+        </div>
+
+        <div class="neu fu d5" style="overflow:hidden;">
+          <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:var(--navy);">Recent Registrations</div>
+              <div style="font-size:11px;color:var(--t3);margin-top:2px;">Last 5 passengers added</div>
+            </div>
+            <button class="btn btn-ghost btn-xs" onclick="goSec('pas',document.getElementById('ni-pas'))">View all →</button>
+          </div>
+          <div id="ov-desk" class="desk-only" style="padding:0 10px 10px;overflow-x:auto;">
+            <table class="data-table"><thead><tr>
+              <th>Passenger</th><th>Group</th><th>Package</th><th>Paid</th><th>Status</th>
+            </tr></thead><tbody id="ov-tb"></tbody></table>
+          </div>
+          <div id="ov-mob" class="mob-only" style="padding:0 12px 12px;" id="ov-mob-cards"></div>
+        </div>
+      </div>
+
+      <div id="sec-pas" class="sec">
+        <div class="fu d1" style="margin-bottom:18px;">
+          <div style="font-size:19px;font-weight:800;color:var(--navy);letter-spacing:-.4px;">Passenger Directory</div>
+          <div style="font-size:12.5px;color:var(--t2);margin-top:3px;">All registered passengers &amp; payment status</div>
+        </div>
+
+        <div class="fu d2" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+          <div class="iw" style="flex:1;min-width:150px;">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input id="ps-q" class="inp" placeholder="Search name, phone…" style="padding-top:10px;padding-bottom:10px;font-size:13px;" oninput="renderPas()">
+          </div>
+          <select id="ps-f" class="inp" style="width:140px;padding-top:10px;padding-bottom:10px;font-size:13px;" onchange="renderPas()">
+            <option value="">All Status</option>
+            <option value="p">Paid</option>
+            <option value="t">Partial</option>
+            <option value="n">Pending</option>
+          </select>
+          <button class="btn btn-blue btn-sm desk-only" style="display:none;" onclick="goSec('add',document.getElementById('ni-add'))">+ Add</button>
+        </div>
+
+        <div id="desk-table" class="neu fu d3" style="overflow:hidden;">
+          <div style="overflow-x:auto;padding:8px 10px 10px;">
+            <table class="data-table">
+              <thead><tr>
+                <th>#</th><th>Name</th>
+                <th class="desk-only">Phone</th>
+                <th class="desk-only">Group</th>
+                <th>Package</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="p-tb"></tbody>
+            </table>
+          </div>
+          <div style="padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:11.5px;color:var(--t3);" id="p-cnt">—</div>
+            <div style="display:flex;gap:7px;">
+              <button class="btn btn-ghost btn-xs">← Prev</button>
+              <div class="nuxs" style="padding:6px 12px;font-size:12px;font-family:Sora;font-weight:700;color:var(--blue);">1</div>
+              <button class="btn btn-ghost btn-xs">Next →</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="mob-cards" style="display:none;">
+          <div id="m-cards"></div>
+          <div style="font-size:11.5px;color:var(--t3);text-align:center;margin-top:8px;" id="m-cnt"></div>
+        </div>
+      </div>
+
+      <div id="sec-add" class="sec">
+        <div class="fu d1" style="margin-bottom:20px;">
+          <div style="font-size:19px;font-weight:800;color:var(--navy);letter-spacing:-.4px;">Register New Passenger</div>
+          <div style="font-size:12.5px;color:var(--t2);margin-top:3px;">Fill details — financial summary updates live</div>
+        </div>
+
+        <div id="reg-grid" style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start;">
+
+          <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <div class="nusm fu d2" style="padding:20px;">
+              <div class="fsec-title">Personal Information</div>
+              <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div style="grid-column:1/-1;">
+                  <label class="lbl">Full Name *</label>
+                  <input id="f-nm" class="inp" placeholder="e.g. Priya Sharma" oninput="lp()">
+                </div>
+                <div>
+                  <label class="lbl">Phone *</label>
+                  <input id="f-ph" class="inp" type="tel" placeholder="+91 98765 43210" oninput="lp()">
+                </div>
+                <div>
+                  <label class="lbl">Age</label>
+                  <input id="f-ag" class="inp" type="number" placeholder="e.g. 35">
+                </div>
+                <div>
+                  <label class="lbl">Email</label>
+                  <input id="f-em" class="inp" type="email" placeholder="priya@email.com">
+                </div>
+                <div>
+                  <label class="lbl">City</label>
+                  <input id="f-ci" class="inp" placeholder="Nagpur">
+                </div>
+              </div>
+            </div>
+
+            <div class="nusm fu d3" style="padding:20px;">
+              <div class="fsec-title">Tour &amp; Group Details</div>
+              <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label class="lbl">Tour Group *</label>
+                  <select id="f-gr" class="inp" onchange="lp()">
+                    <option value="">Select group…</option>
+                    <option>दिव्ययात्रा</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="lbl">Seat / Berth</label>
+                  <input id="f-se" class="inp" placeholder="S4 / 32">
+                </div>
+                <div>
+                  <label class="lbl">ID Proof</label>
+                  <select id="f-id" class="inp"><option>Aadhar Card</option><option>Passport</option><option>Voter ID</option><option>PAN Card</option></select>
+                </div>
+                <div>
+                  <label class="lbl">ID Number</label>
+                  <input id="f-idn" class="inp mono" placeholder="XXXX XXXX XXXX">
+                </div>
+                <div style="grid-column:1/-1;">
+                  <label class="lbl">Medical / Notes</label>
+                  <input id="f-me" class="inp" placeholder="Diabetes, dietary needs…">
+                </div>
+              </div>
+            </div>
+
+            <div class="nusm fu d4" style="padding:20px;box-shadow:5px 5px 14px var(--nd),-5px -5px 14px var(--nl),inset 0 0 0 1.5px rgba(5,150,105,.18);">
+              <div class="fsec-title" style="color:var(--green);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="display:inline;margin-right:4px;vertical-align:middle;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                Financial Details
+              </div>
+              <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label class="lbl">Total Package (₹) *</label>
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;font-size:14px;color:var(--t3);">₹</span>
+                    <input id="f-tot" class="inp" type="number" placeholder="0" style="padding-left:26px;" oninput="cb()">
+                  </div>
+                </div>
+                <div>
+                  <label class="lbl">Advance Paid (₹) *</label>
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;font-size:14px;color:var(--t3);">₹</span>
+                    <input id="f-adv" class="inp" type="number" placeholder="0" style="padding-left:26px;" oninput="cb()">
+                  </div>
+                </div>
+                <div>
+                  <label class="lbl">Balance Due</label>
+                  <div class="nuin" id="f-bal" style="padding:11px 13px;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:14px;color:var(--amber);">₹ 0</div>
+                </div>
+                <div>
+                  <label class="lbl">Payment Method</label>
+                  <select id="f-pm" class="inp"><option>Cash</option><option>UPI / GPay</option><option>Bank Transfer</option><option>Cheque</option><option>Online</option></select>
+                </div>
+                <div style="grid-column:1/-1;">
+                  <label class="lbl">Reference / Notes</label>
+                  <input id="f-no" class="inp" placeholder="Transaction ID, UTR, receipt no…">
+                </div>
+              </div>
+
+              <div id="pp-wrap" style="margin-top:16px;display:none;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:6px;">
+                  <span>Payment progress</span>
+                  <span id="pp-lbl" style="font-weight:700;color:var(--green);">0%</span>
+                </div>
+                <div class="ptr" style="height:7px;"><div id="pp-bar" class="pfl" style="background:linear-gradient(90deg,var(--green),#34d399);width:0%;"></div></div>
+              </div>
+            </div>
+
+            <div class="fu d5" style="display:flex;gap:10px;">
+              <button class="btn btn-blue" style="flex:1;padding:14px;font-size:14px;border-radius:13px;" onclick="sub()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v14a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save &amp; Generate Receipt
+              </button>
+              <button class="btn btn-ghost" style="padding:14px 18px;font-size:14px;border-radius:13px;" onclick="clr()">Clear</button>
+            </div>
+          </div>
+
+          <div id="preview-col" style="position:sticky;top:76px;" class="desk-only">
+            <div class="nusm" style="padding:20px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:16px;">Live Preview</div>
+
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <div id="pv-av" style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--navy),var(--navym));display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:white;flex-shrink:0;box-shadow:4px 4px 10px var(--nd),-3px -3px 8px var(--nl);">?</div>
+                <div>
+                  <div id="pv-nm" style="font-size:14px;font-weight:700;color:var(--t3);">Passenger Name</div>
+                  <div id="pv-gr" style="font-size:11px;color:var(--t3);margin-top:2px;">No group selected</div>
+                </div>
+              </div>
+
+              <div style="height:1px;background:linear-gradient(90deg,transparent,var(--nd),transparent);margin-bottom:14px;"></div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;">
+                <div class="nuinsm" style="padding:9px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:3px;">Phone</div>
+                  <div id="pv-ph" style="font-size:12px;font-weight:600;color:var(--t2);">—</div>
+                </div>
+                <div class="nuinsm" style="padding:9px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:3px;">Status</div>
+                  <div id="pv-st"><span class="bdg bdg-n">Pending</span></div>
+                </div>
+                <div class="nuinsm" style="padding:9px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:3px;">Package</div>
+                  <div id="pv-pk" class="mono" style="font-size:12px;font-weight:600;color:var(--navy);">₹ —</div>
+                </div>
+                <div class="nuinsm" style="padding:9px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:3px;">Balance</div>
+                  <div id="pv-bl" class="mono" style="font-size:12px;font-weight:600;color:var(--amber);">₹ —</div>
+                </div>
+              </div>
+
+              <div class="nuin" style="padding:13px;">
+                <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:9px;">Receipt Preview</div>
+                <div class="mono" style="font-size:10.5px;color:var(--t2);line-height:2;">
+                  <div style="font-weight:700;color:var(--navy);">दिव्ययात्रा Receipt</div>
+                  <div style="color:var(--nd);">────────────────</div>
+                  <div id="rc-nm">Name   : —</div>
+                  <div id="rc-gr">Tour   : —</div>
+                  <div id="rc-to">Total  : ₹ —</div>
+                  <div id="rc-pa">Paid   : ₹ —</div>
+                  <div id="rc-bl">Due    : ₹ —</div>
+                  <div>Date   : <span id="rc-dt"></span></div>
+                  <div style="color:var(--nd);">────────────────</div>
+                  <div style="color:var(--t3);font-size:9.5px;">Thank you for your booking</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+    <nav class="bottom-nav" id="bnav">
+      <div class="bn-item on" id="bn-ov" onclick="goSec('ov',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Overview
+      </div>
+      <div class="bn-item" id="bn-pas" onclick="goSec('pas',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Passengers
+      </div>
+      <div class="bn-item" id="bn-add" onclick="goSec('add',null)" style="position:relative;">
+        <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#1d4ed8);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,99,235,.4);margin-top:-22px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        Add
+      </div>
+      <div class="bn-item" onclick="doLogout()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </div>
+    </nav>
+
+  </div></div></div>
+
+  <div id="pay-modal" class="ov" style="z-index:9999; display:none; align-items:center; justify-content:center;">
+    <div class="neu" style="width:90%; max-width:340px; padding:24px; animation:fpop .3s cubic-bezier(0.16,1,0.3,1) both;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="font-size:18px; font-weight:800; color:var(--navy);">Update Payment</div>
+        <svg onclick="closePayModal()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" style="cursor:pointer;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      
+      <div class="nuinsm" style="padding:12px; margin-bottom:18px; display:flex; justify-content:space-between; background:var(--sur);">
+        <div>
+          <div style="font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; margin-bottom:4px;">Total Package</div>
+          <div id="mod-tot" class="mono" style="font-size:14px; font-weight:700; color:var(--t1);">₹ 0</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; margin-bottom:4px;">Already Paid</div>
+          <div id="mod-paid" class="mono" style="font-size:14px; font-weight:700; color:var(--green);">₹ 0</div>
+        </div>
+      </div>
+
+      <label class="lbl" style="color:var(--navy);">New Total Paid Amount *</label>
+      <div style="position:relative; margin-bottom:24px;">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;font-size:15px;color:var(--t3);">₹</span>
+        <input id="mod-inp" class="inp mono" type="number" style="padding-left:30px; font-size:16px; font-weight:600; color:var(--blue);" placeholder="0">
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-blue" style="flex:1; padding:12px; font-size:14px; border-radius:12px;" onclick="submitUpdatePay()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Update Status
+        </button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ── Data ── */
+const PAL=[['#1a3a6b','#1e4d8c'],['#059669','#34d399'],['#b45309','#fbbf24'],['#be123c','#f87171'],['#1d4ed8','#60a5fa'],['#7c3aed','#a78bfa'],['#0f766e','#5eead4'],['#b45309','#fdba74']];
+
+let DB=[];
+
+/* ── 🚀 Asli Supabase Data Fetch ── */
+async function loadData() {
+  try {
+    const res = await fetch('/api/pro_get_passengers');
+    const dbData = await res.json();
+    DB = dbData.map(p => ({
+      id: p.id,
+      name: p.name || 'Unknown',
+      phone: p.phone || '—',
+      group: p.tour_group || 'Unassigned',
+      total: parseFloat(p.total_fare) || 0,
+      paid: parseFloat(p.amount_paid) || 0
+    }));
+    rfStats(); rfOv(); renderPas(); lp();
+  } catch (error) {
+    toast('r', 'Database Error! Data nahi aaya.');
+  }
+}
+
+const fc=n=>'₹'+Number(n).toLocaleString('en-IN');
+const ini=n=>n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const st=(paid,tot)=>paid>=tot&&tot>0?'p':paid>0?'t':'n';
+const stl=s=>s==='p'?'Paid':s==='t'?'Partial':'Pending';
+const stcls=s=>s==='p'?'bdg-p':s==='t'?'bdg-t':'bdg-n';
+
+/* ── Stats ── */
+function rfStats(){
+  const rev=DB.reduce((a,p)=>a+p.paid,0);
+  const pend=DB.reduce((a,p)=>a+Math.max(0,p.total-p.paid),0);
+  const tot=DB.reduce((a,p)=>a+p.total,0);
+  const pCt=DB.filter(p=>p.paid<p.total).length;
+  const grp=new Set(DB.map(p=>p.group)).size;
+  const rp=tot?Math.round(rev/tot*100):0;
+  const pp=tot?Math.round(pend/tot*100):0;
+  document.getElementById('s-tot').textContent=DB.length;
+  document.getElementById('s-rev').textContent=fc(rev);
+  document.getElementById('s-pend').textContent=fc(pend);
+  document.getElementById('s-grp').textContent=grp;
+  document.getElementById('s-rpct').textContent=rp+'%';
+  document.getElementById('s-pct').textContent=pCt;
+  document.getElementById('pr-rev').style.width=rp+'%';
+  document.getElementById('pr-pend').style.width=pp+'%';
+}
+
+/* ── Overview ── */
+function rfOv(){
+  const tb=document.getElementById('ov-tb');
+  if(tb){ tb.innerHTML=''; DB.slice(0,5).forEach((p,i)=>{
+    const s=st(p.paid,p.total);
+    const [c1,c2]=PAL[i%PAL.length];
+    tb.innerHTML+=`<tr>
+      <td><div style="display:flex;align-items:center;gap:9px;">
+        <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;">${ini(p.name)}</div>
+        <span style="font-weight:600;">${p.name}</span></div></td>
+      <td style="color:var(--t2);font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.group.split('—')[0].trim()}</td>
+      <td class="mono" style="font-size:12px;">${fc(p.total)}</td>
+      <td class="mono" style="font-size:12px;color:var(--green);">${fc(p.paid)}</td>
+      <td><span class="bdg ${stcls(s)}">${stl(s)}</span></td></tr>`;
+  });}
+  
+  const mc=document.getElementById('ov-mob');
+  if(mc){ mc.innerHTML=''; DB.slice(0,5).forEach((p,i)=>{
+    const s=st(p.paid,p.total);
+    const [c1,c2]=PAL[i%PAL.length];
+    mc.innerHTML+=`<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--sur);box-shadow:3px 3px 7px var(--nd),-3px -3px 7px var(--nl);margin-bottom:8px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;">${ini(p.name)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+        <div style="font-size:11px;color:var(--t3);">${p.group.split('—')[0].trim()}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="mono" style="font-size:12px;font-weight:600;">${fc(p.paid)}</div>
+        <span class="bdg ${stcls(s)}" style="font-size:10px;">${stl(s)}</span>
+      </div></div>`;
+  });}
+}
+
+/* ── Passengers ── */
+function filtered(){
+  const q=(document.getElementById('ps-q').value||'').toLowerCase();
+  const f=document.getElementById('ps-f').value;
+  return DB.filter(p=>
+    (!q||p.name.toLowerCase().includes(q)||p.phone.includes(q)||p.group.toLowerCase().includes(q))&&
+    (!f||st(p.paid,p.total)===f)
+  );
+}
+
+function renderPas(){
+  const list=filtered();
+  document.getElementById('p-cnt').textContent=`Showing ${list.length} of ${DB.length}`;
+  document.getElementById('m-cnt').textContent=`Showing ${list.length} of ${DB.length}`;
+
+  const tb=document.getElementById('p-tb');
+  tb.innerHTML='';
+  list.forEach((p,i)=>{
+    const s=st(p.paid,p.total); const bal=Math.max(0,p.total-p.paid);
+    const [c1,c2]=PAL[p.id%PAL.length];
+    tb.innerHTML+=`<tr style="animation:fu .35s both;animation-delay:${i*.04}s">
+      <td class="mono" style="font-size:11px;color:var(--t3);">${String(p.id).padStart(3,'0')}</td>
+      <td><div style="display:flex;align-items:center;gap:9px;">
+        <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;">${ini(p.name)}</div>
+        <span style="font-weight:600;font-size:13px;">${p.name}</span></div></td>
+      <td class="desk-only mono" style="font-size:12px;color:var(--t2);">${p.phone}</td>
+      <td class="desk-only" style="font-size:12px;color:var(--t2);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.group.split('—')[0].trim()}</td>
+      <td class="mono" style="font-size:12.5px;font-weight:600;">${fc(p.total)}</td>
+      <td class="mono" style="font-size:12.5px;color:var(--green);font-weight:600;">${fc(p.paid)}</td>
+      <td class="mono" style="font-size:12.5px;color:${bal>0?'var(--amber)':'var(--t3)'};font-weight:600;">${bal>0?fc(bal):'—'}</td>
+      <td><span class="bdg ${stcls(s)}">${stl(s)}</span></td>
+      <td style="display:flex;gap:5px;">
+        <button class="btn btn-ghost btn-xs" onclick="updatePay(${p.id}, ${p.total}, ${p.paid})" title="Update Payment"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+        <button class="btn btn-ghost btn-xs" onclick="shareWa(${p.id})" title="WhatsApp Share"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button>
+        <button class="btn btn-ghost btn-xs" onclick="printPdf(${p.id})" title="Download PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+        <button class="btn btn-ghost btn-xs" onclick="delP(${p.id})" title="Delete Passenger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+      </td></tr>`;
+  });
+
+  const mc=document.getElementById('m-cards');
+  mc.innerHTML='';
+  list.forEach((p,i)=>{
+    const s=st(p.paid,p.total); const bal=Math.max(0,p.total-p.paid);
+    const [c1,c2]=PAL[p.id%PAL.length];
+    mc.innerHTML+=`<div class="p-card" style="animation:fu .35s both;animation-delay:${i*.04}s">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;">
+        <div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${ini(p.name)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;">${p.name}</div>
+          <div style="font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.group}</div>
+        </div>
+        <span class="bdg ${stcls(s)}">${stl(s)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div class="nuinsm" style="padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Package</div>
+          <div class="mono" style="font-size:12px;font-weight:700;">${fc(p.total)}</div>
+        </div>
+        <div class="nuinsm" style="padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Paid</div>
+          <div class="mono" style="font-size:12px;font-weight:700;color:var(--green);">${fc(p.paid)}</div>
+        </div>
+        <div class="nuinsm" style="padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Balance</div>
+          <div class="mono" style="font-size:12px;font-weight:700;color:${bal>0?'var(--amber)':'var(--t3)'};">${bal>0?fc(bal):'✓'}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:11.5px;color:var(--t2);" class="mono">${p.phone}</div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-ghost btn-xs" onclick="updatePay(${p.id}, ${p.total}, ${p.paid})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="btn btn-ghost btn-xs" onclick="shareWa(${p.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button>
+          <button class="btn btn-ghost btn-xs" onclick="printPdf(${p.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+          <button class="btn btn-ghost btn-xs" onclick="delP(${p.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        </div>
+      </div></div>`;
+  });
+}
+
+/* ── Premium Modal Logic ── */
+let currentUpdateId = null;
+let currentTotal = 0;
+
+function updatePay(id, tot, paid) {
+  currentUpdateId = id;
+  currentTotal = tot;
+  document.getElementById('mod-tot').textContent = fc(tot);
+  document.getElementById('mod-paid').textContent = fc(paid);
+  document.getElementById('mod-inp').value = paid;
+  document.getElementById('pay-modal').style.display = 'flex';
+}
+
+function closePayModal() {
+  document.getElementById('pay-modal').style.display = 'none';
+  currentUpdateId = null;
+}
+
+async function submitUpdatePay() {
+  if(!currentUpdateId) return;
+  const nPaid = parseFloat(document.getElementById('mod-inp').value);
+  if(isNaN(nPaid) || nPaid < 0 || nPaid > currentTotal) { toast('a','Invalid amount! Amount cannot be more than total.'); return; }
+  
+  try {
+    await fetch('/api/pro_update_payment', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id:currentUpdateId, paid:nPaid})
+    });
+    await loadData(); 
+    closePayModal();
+    toast('g','Payment Updated Successfully!');
+  } catch(e) { toast('r','Update Failed'); }
+}
+
+/* ── Action Buttons Logic ── */
+async function delP(id) {
+  if(!confirm("Are you sure you want to delete this passenger?")) return;
+  try {
+    await fetch('/api/pro_delete_passenger', {
+      method: 'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: id})
+    });
+    await loadData();
+    toast('g', 'Passenger Deleted Successfully!');
+  } catch(e) { toast('r', 'Failed to delete'); }
+}
+
+function printPdf(id) {
+  const p = DB.find(x=>x.id===id); if(!p) return;
+  const bal = Math.max(0, p.total - p.paid);
+  const prt = window.open('', '_blank');
+  prt.document.write(`
+    <html><head><title>Receipt_${p.name}</title>
+    <style>body{font-family:sans-serif;padding:40px;color:#111;} .box{border:2px dashed #ccc;padding:30px;max-width:400px;margin:auto;border-radius:10px;} h2{color:#1a3a6b;text-align:center;margin-top:0;}</style>
+    </head><body>
+    <div class="box">
+      <h2>दिव्ययात्रा Receipt</h2><hr style="border:1px solid #eee;margin:15px 0;">
+      <p><b>Name:</b> ${p.name}<br><b>Phone:</b> ${p.phone}<br><b>Tour:</b> ${p.group}</p>
+      <hr style="border:1px solid #eee;margin:15px 0;">
+      <p><b>Total Amount:</b> ₹${p.total.toLocaleString('en-IN')}<br>
+      <b>Amount Paid:</b> ₹${p.paid.toLocaleString('en-IN')}<br>
+      <b>Balance Due:</b> ₹${bal.toLocaleString('en-IN')}</p>
+      <hr style="border:1px solid #eee;margin:15px 0;">
+      <p style="text-align:center;font-size:12px;color:#666;">Thank you for your booking! - www.divyayatra.com</p>
+    </div>
+    <script>window.print(); setTimeout(()=>window.close(),500);<\/script>
+    </body></html>
+  `);
+}
+
+function shareWa(id) {
+  const p = DB.find(x=>x.id===id); if(!p) return;
+  const bal = Math.max(0, p.total - p.paid);
+  
+  // 🧹 Phone Number Safai (Aap chahe +91 daalein ya na daalein, ye khud theek karega)
+  let cleanPhone = p.phone.replace(/[^0-9]/g, ''); 
+  if (cleanPhone.length === 10) { cleanPhone = '91' + cleanPhone; }
+
+  const msg = `*दिव्ययात्रा Booking Receipt* 🎫\n\n*Name:* ${p.name}\n*Tour:* ${p.group}\n----------------\n*Total Package:* ₹${p.total.toLocaleString('en-IN')}\n*Advance Paid:* ₹${p.paid.toLocaleString('en-IN')}\n*Balance Due:* ₹${bal.toLocaleString('en-IN')}\n----------------\nThank you for choosing us!`;
+  
+  window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+/* ── Form ── */
+function cb(){
+  const t=parseFloat(document.getElementById('f-tot').value)||0;
+  const a=parseFloat(document.getElementById('f-adv').value)||0;
+  const b=Math.max(0,t-a);
+  document.getElementById('f-bal').textContent=fc(b);
+  const wr=document.getElementById('pp-wrap');
+  if(t>0){
+    wr.style.display='block';
+    const pct=Math.min(100,Math.round(a/t*100));
+    document.getElementById('pp-bar').style.width=pct+'%';
+    document.getElementById('pp-lbl').textContent=pct+'%';
+  } else { wr.style.display='none'; }
+  lp();
+}
+function lp(){
+  const nm=document.getElementById('f-nm').value;
+  const ph=document.getElementById('f-ph').value;
+  const gr=document.getElementById('f-gr') && document.getElementById('f-gr').value ? document.getElementById('f-gr').value : "दिव्ययात्रा";
+  const t=parseFloat(document.getElementById('f-tot').value)||0;
+  const a=parseFloat(document.getElementById('f-adv').value)||0;
+  const b=Math.max(0,t-a);
+  const av=document.getElementById('pv-av'); if(!av) return;
+  av.textContent=nm?ini(nm):'?';
+  document.getElementById('pv-nm').textContent=nm||'Passenger Name';
+  document.getElementById('pv-nm').style.color=nm?'var(--navy)':'var(--t3)';
+  document.getElementById('pv-gr').textContent=gr||'No group selected';
+  document.getElementById('pv-ph').textContent=ph||'—';
+  document.getElementById('pv-pk').textContent=t?fc(t):'₹ —';
+  document.getElementById('pv-bl').textContent=t?fc(b):'₹ —';
+  const s=st(a,t);
+  document.getElementById('pv-st').innerHTML=t?`<span class="bdg ${stcls(s)}">${stl(s)}</span>`:`<span class="bdg bdg-n">Pending</span>`;
+  document.getElementById('rc-nm').textContent='Name   : '+(nm||'—');
+  document.getElementById('rc-gr').textContent='Tour   : '+(gr?gr.split('—')[0].trim():'—');
+  document.getElementById('rc-to').textContent='Total  : '+(t?fc(t):'₹ —');
+  document.getElementById('rc-pa').textContent='Paid   : '+(a?fc(a):'₹ —');
+  document.getElementById('rc-bl').textContent='Due    : '+fc(b);
+}
+
+/* ── 🚀 Supabase me Save Karne Ka function ── */
+async function sub(){
+  const nm=document.getElementById('f-nm').value.trim();
+  const ph=document.getElementById('f-ph').value.trim();
+  const gr=document.getElementById('f-gr') && document.getElementById('f-gr').value ? document.getElementById('f-gr').value : "दिव्ययात्रा";
+  const t=parseFloat(document.getElementById('f-tot').value)||0;
+  const a=parseFloat(document.getElementById('f-adv').value)||0;
+  
+  if(!nm||!ph||!t){ toast('r','Please fill all required (*) fields'); return; }
+  if(a>t){ toast('a','Advance cannot exceed total package amount'); return; }
+  
+  try {
+    await fetch('/api/pro_add_passenger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nm, phone: ph, group: gr, total: t, paid: a })
+    });
+    
+    await loadData(); 
+    clr();
+    goSec('pas',document.getElementById('ni-pas'));
+    toast('g',`${nm} registered successfully!`);
+  } catch (error) {
+    toast('r', 'Failed to save to Database');
+  }
+}
+
+function clr(){
+  ['f-nm','f-ph','f-ag','f-em','f-ci','f-se','f-idn','f-me','f-tot','f-adv','f-no']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const gr=document.getElementById('f-gr'); if(gr) gr.value='';
+  document.getElementById('f-bal').textContent='₹ 0';
+  document.getElementById('pp-wrap').style.display='none';
+  lp();
+}
+
+/* ── Toast ── */
+function toast(type,msg){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const cols={g:'var(--green)',a:'var(--amber)',r:'var(--rose)',b:'var(--blue)'};
+  const el=document.createElement('div'); el.className='toast';
+  el.innerHTML=`<div class="tdot" style="background:${cols[type]};box-shadow:0 0 5px ${cols[type]};"></div><span style="overflow:hidden;text-overflow:ellipsis;">${msg}</span>
+    <svg onclick="this.closest('.toast').remove()" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" style="cursor:pointer;flex-shrink:0;margin-left:6px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400);},3500);
+}
+
+/* ── Navigation ── */
+const secMap={'ov':'Overview','pas':'Passengers','add':'Add Passenger'};
+const bnIds={'ov':'bn-ov','pas':'bn-pas','add':'bn-add'};
+const sbIds={'ov':'ni-ov','pas':'ni-pas','add':'ni-add'};
+
+function goSec(name,navEl){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById('sec-'+name).classList.add('on');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const sbEl=navEl||document.getElementById(sbIds[name]);
+  if(sbEl) sbEl.classList.add('on');
+  // bottom nav
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('on'));
+  const bnEl=document.getElementById(bnIds[name]);
+  if(bnEl) bnEl.classList.add('on');
+  document.getElementById('pg-title').textContent=secMap[name]||name;
+  closeSB();
+  window.scrollTo(0,0);
+}
+
+function openSB() { document.getElementById('sb').classList.add('open'); document.getElementById('ov').classList.add('on'); }
+function closeSB(){ document.getElementById('sb').classList.remove('open'); document.getElementById('ov').classList.remove('on'); }
+
+/* ── 🔐 REAL LOGIN & SESSION MANAGEMENT ── */
+async function doLogin() {
+  const e = document.getElementById('l-email').value.trim();
+  const p = document.getElementById('l-pass').value.trim();
+  if(!e || !p) { toast('r', 'Please enter credentials'); return; }
+  
+  try {
+    const res = await fetch('/api/pro_admin_login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: e, password: p })
+    });
+    
+    if (res.ok) {
+      localStorage.setItem('divya_admin_logged_in', 'true');
+      document.getElementById('view-login').classList.remove('active');
+      document.getElementById('view-dashboard').classList.add('active');
+      loadData(); 
+      document.getElementById('rc-dt').textContent = new Date().toLocaleDateString('en-IN');
+      toast('g', 'Welcome back! Signed in successfully.');
+    } else {
+      toast('r', 'Invalid Email or Password!');
+    }
+  } catch(err) {
+    toast('r', 'Server connection failed!');
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('divya_admin_logged_in'); 
+  document.getElementById('view-dashboard').classList.remove('active');
+  document.getElementById('view-login').classList.add('active');
+  toast('a', 'Logged out successfully');
+}
+
+/* ── Init ── */
+document.getElementById('rc-dt').textContent=new Date().toLocaleDateString('en-IN');
+
+/* ── 🚀 AUTO-LOGIN (Refresh Fix) ── */
+window.onload = function() {
+  if (localStorage.getItem('divya_admin_logged_in') === 'true') {
+    document.getElementById('view-login').classList.remove('active');
+    document.getElementById('view-dashboard').classList.add('active');
+    loadData();
+    document.getElementById('rc-dt').textContent = new Date().toLocaleDateString('en-IN');
+  }
+};
+</script>
+</body>
+</html>

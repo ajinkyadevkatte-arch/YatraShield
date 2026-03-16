@@ -3,13 +3,13 @@ import requests
 import qrcode
 import os
 import qrcode.image.svg 
-import io  # NAYA ADDED: Memory me image process karne ke liye
+import io  
 
 app = Flask(__name__)
 
-# Ensure QR code and uploads directories exist (Ab inki itni zarurat nahi hai, par purana logic break na ho isliye rakha hai)
+# Ensure directories exist
 os.makedirs(os.path.join('static', 'qrcodes'), exist_ok=True)
-os.makedirs(os.path.join('static', 'uploads'), exist_ok=True) # Naya folder images ke liye
+os.makedirs(os.path.join('static', 'uploads'), exist_ok=True) 
 
 # ☁️ SUPABASE CLOUD REST API SETUP ☁️
 SUPABASE_URL = "https://yxzsrdenjpecyyenwnxf.supabase.co"
@@ -25,36 +25,31 @@ HEADERS = {
 def home():
     return render_template('index.html')
 
+@app.route('/pro')
+def pro_dashboard():
+    return render_template('tourpro-dashboard.html')
 
-# ========================================================
-# 🔥 NAYA FUNCTION: Seedha Supabase Cloud Storage me file dalne ke liye 🔥
-# ========================================================
 def upload_to_supabase(file_bytes, file_name, content_type):
-    # 'yatra_assets' bucket me file upload kar rahe hain
     url = f"{SUPABASE_URL}/storage/v1/object/yatra_assets/{file_name}"
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": content_type,
-        "x-upsert": "true"  # Update karne pe purani photo replace ho jayegi
+        "x-upsert": "true"  
     }
     res = requests.post(url, headers=headers, data=file_bytes)
     
     if res.status_code in [200, 201]:
-        # Upload hone ke baad seedha Public Link return karega
         return f"{SUPABASE_URL}/storage/v1/object/public/yatra_assets/{file_name}"
     else:
         print("Supabase Upload Error:", res.text)
         return None
-# ========================================================
 
-
-# 1. API - Cloud me Data Save (Ya Update) karne ke liye
 @app.route('/api/add_passenger', methods=['POST'])
 def add_passenger():
-    # Ab JSON nahi, Form data aayega kyunki file upload ho rahi hai
     p_id = request.form.get('id') 
     pnr = request.form.get('pnr')
+    city = request.form.get('city')
 
     if not pnr:
         return jsonify({"error": "PNR is required"}), 400
@@ -62,16 +57,12 @@ def add_passenger():
     base_url = request.host_url 
     qr_data = f"{base_url}p/{pnr}" 
     
-    # --- NAYA QR GENERATION (SEEDHA CLOUD ME) ---
-    
-    # PNG QR
     qr_img = qrcode.make(qr_data)
     img_io = io.BytesIO()
     qr_img.save(img_io, 'PNG')
     img_bytes = img_io.getvalue()
     qr_png_url = upload_to_supabase(img_bytes, f"qrcodes/qr_{pnr}.png", "image/png")
 
-    # SVG QR
     factory = qrcode.image.svg.SvgImage
     qr_svg_img = qrcode.make(qr_data, image_factory=factory)
     svg_io = io.BytesIO()
@@ -79,7 +70,6 @@ def add_passenger():
     svg_bytes = svg_io.getvalue()
     qr_svg_url = upload_to_supabase(svg_bytes, f"qrcodes/qr_{pnr}.svg", "image/svg+xml")
 
-    # --- NAYA: IMAGE SAVING LOGIC (SEEDHA CLOUD ME) ---
     photo_path = None
     aadhaar_path = None
 
@@ -88,7 +78,6 @@ def add_passenger():
         if photo_file.filename != '':
             ext = photo_file.filename.split('.')[-1]
             p_filename = f"photos/photo_{pnr}.{ext}"
-            # Seedha File read karke cloud me bhej do
             photo_path = upload_to_supabase(photo_file.read(), p_filename, photo_file.content_type)
 
     if 'aadhaar' in request.files:
@@ -96,10 +85,8 @@ def add_passenger():
         if aadhaar_file.filename != '':
             ext = aadhaar_file.filename.split('.')[-1]
             a_filename = f"aadhaar/aadhaar_{pnr}.{ext}"
-            # Seedha File read karke cloud me bhej do
             aadhaar_path = upload_to_supabase(aadhaar_file.read(), a_filename, aadhaar_file.content_type)
 
-    # --- SUPABASE DATA PREPARATION ---
     try:
         passenger_data = {
             "name": request.form.get('name'),
@@ -108,10 +95,10 @@ def add_passenger():
             "group_name": request.form.get('group'), 
             "contact": request.form.get('contact'),
             "pnr": pnr,
-            "medical": request.form.get('medical')
+            "medical": request.form.get('medical'),
+            "city": request.form.get('city')
         }
 
-        # Agar cloud upload successful raha, toh Database me URL save karo
         if qr_png_url:
             passenger_data["qr_path"] = qr_png_url
         if photo_path:
@@ -120,12 +107,10 @@ def add_passenger():
             passenger_data["aadhaar_path"] = aadhaar_path
         
         if p_id and p_id != 'null':
-            # UPDATE EXISTING RECORD
             update_url = f"{SUPABASE_URL}/rest/v1/passengers?id=eq.{p_id}"
             response = requests.patch(update_url, headers=HEADERS, json=passenger_data)
             success_msg = f"{request.form.get('name')}'s profile updated successfully! ☁️"
         else:
-            # CREATE NEW RECORD
             passenger_data["attendance_logs"] = {"General Boarding": "pending"}
             insert_url = f"{SUPABASE_URL}/rest/v1/passengers"
             response = requests.post(insert_url, headers=HEADERS, json=passenger_data)
@@ -134,8 +119,8 @@ def add_passenger():
         if response.status_code in [200, 201, 204]:
             return jsonify({
                 "message": success_msg, 
-                "qr_url": qr_png_url,     # Cloud link dega display ke liye
-                "qr_svg_url": qr_svg_url  # Cloud link dega download ke liye
+                "qr_url": qr_png_url, 
+                "qr_svg_url": qr_svg_url 
             })
         else:
             return jsonify({"error": "Failed to save to cloud"}), 500
@@ -143,7 +128,6 @@ def add_passenger():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 2. API - Cloud se sara data lene ke liye 
 @app.route('/api/get_passengers', methods=['GET'])
 def get_passengers():
     try:
@@ -157,14 +141,9 @@ def get_passengers():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# =========================================================
-# 🔥 SMART SOS ROUTE - QR SCAN HONE PAR YE CHALEGA 🔥
-# =========================================================
 @app.route('/p/<pnr>')
 def passenger_profile(pnr):
     try:
-        # 1. Passenger ki details nikalo
         fetch_url = f"{SUPABASE_URL}/rest/v1/passengers?pnr=eq.{pnr}&select=*"
         response = requests.get(fetch_url, headers=HEADERS)
         
@@ -172,7 +151,6 @@ def passenger_profile(pnr):
             passenger = response.json()[0]
             group_name = passenger.get('group_name')
             
-            # 2. Us passenger ke Group Admin ka number nikalo database se
             admin_phone = ""
             if group_name:
                 contact_url = f"{SUPABASE_URL}/rest/v1/group_contacts?group_letter=eq.{group_name}&select=phone"
@@ -180,17 +158,13 @@ def passenger_profile(pnr):
                 if contact_res.status_code == 200 and len(contact_res.json()) > 0:
                     admin_phone = contact_res.json()[0].get('phone', '')
 
-            # 3. HTML page ko dono cheezein bhej do (Passenger data + Admin Number)
             return render_template('sos.html', p=passenger, admin_phone=admin_phone)
         else:
             return "❌ YatraShield: PNR Not Found or Invalid QR Code", 404
             
     except Exception as e:
         return f"Error: {str(e)}", 500
-# =========================================================
 
-
-# 4. API - DYNAMIC JSON ATTENDANCE Update karne ke liye
 @app.route('/api/update_status', methods=['POST'])
 def update_status():
     data = request.json
@@ -221,7 +195,6 @@ def update_status():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 5. API - SAVE GROUP CONTACTS
 @app.route('/api/save_group_contacts', methods=['POST'])
 def save_group_contacts():
     contacts = request.json
@@ -239,7 +212,6 @@ def save_group_contacts():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 6. API - GET GROUP CONTACTS
 @app.route('/api/get_group_contacts', methods=['GET'])
 def get_group_contacts():
     try:
@@ -252,7 +224,6 @@ def get_group_contacts():
     except Exception as e:
         return jsonify({}), 500
 
-# 7. API - NAYA DELETE PASSENGER
 @app.route('/api/delete_passenger', methods=['POST'])
 def delete_passenger():
     data = request.json
@@ -266,7 +237,7 @@ def delete_passenger():
             return jsonify({"error": "Failed to delete"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-# 🔥 NAYA ROUTE: ZABARDASTI DOWNLOAD KARWANE KE LIYE 🔥
+
 @app.route('/download_qr/<file_type>/<pnr>')
 def download_qr_proxy(file_type, pnr):
     try:
@@ -274,12 +245,10 @@ def download_qr_proxy(file_type, pnr):
         content_type = 'image/png' if ext == 'png' else 'image/svg+xml'
         file_name = f"qr_{pnr}.{ext}"
         
-        # Cloud se file fetch karna
         supabase_public_url = f"{SUPABASE_URL}/storage/v1/object/public/yatra_assets/qrcodes/{file_name}"
         response = requests.get(supabase_public_url)
         
         if response.status_code == 200:
-            # As attachment bhejna (Taki new tab me na khule, direct download ho)
             return send_file(
                 io.BytesIO(response.content),
                 mimetype=content_type,
@@ -287,6 +256,133 @@ def download_qr_proxy(file_type, pnr):
                 download_name=f"YatraShield_QR_{pnr}.{ext}"
             )
         return "File not found", 404
+    except Exception as e:
+        return str(e), 500
+
+# ==========================================
+# 🔥 PRO ADMIN SAAS ROUTES (SEPARATE DATA) 🔥
+# ==========================================
+
+@app.route('/api/pro_get_passengers', methods=['GET'])
+def pro_get_passengers():
+    try:
+        fetch_url = f"{SUPABASE_URL}/rest/v1/pro_passengers?select=*&order=id.desc"
+        response = requests.get(fetch_url, headers=HEADERS)
+        if response.status_code == 200:
+            return jsonify(response.json()), 200
+        else:
+            return jsonify({"error": "Failed to fetch from cloud"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pro_add_passenger', methods=['POST'])
+def pro_add_passenger():
+    try:
+        data = request.json
+        new_passenger = {
+            "name": data.get("name"),
+            "phone": data.get("phone"),
+            "tour_group": data.get("group"),
+            "total_fare": data.get("total", 0),
+            "amount_paid": data.get("paid", 0)
+        }
+        insert_url = f"{SUPABASE_URL}/rest/v1/pro_passengers"
+        response = requests.post(insert_url, headers=HEADERS, json=new_passenger)
+        if response.status_code in [200, 201]:
+            return jsonify({"message": "Pro Passenger Added!"}), 200
+        else:
+            return jsonify({"error": "Failed to save to cloud"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ==========================================
+# FILE KE EKDUM AAKHIR MEIN YEHI HONA CHAHIYE
+# ==========================================
+@app.route('/api/pro_delete_passenger', methods=['POST'])
+def pro_delete_passenger():
+    data = request.json
+    p_id = data.get('id')
+    try:
+        del_url = f"{SUPABASE_URL}/rest/v1/pro_passengers?id=eq.{p_id}"
+        response = requests.delete(del_url, headers=HEADERS)
+        if response.status_code in [200, 204]:
+            return jsonify({"message": "Deleted successfully"})
+        return jsonify({"error": "Failed to delete"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/pro_update_payment', methods=['POST'])
+def pro_update_payment():
+    data = request.json
+    p_id = data.get('id')
+    new_paid = data.get('paid')
+    try:
+        update_url = f"{SUPABASE_URL}/rest/v1/pro_passengers?id=eq.{p_id}"
+        response = requests.patch(update_url, headers=HEADERS, json={"amount_paid": new_paid})
+        if response.status_code in [200, 204]:
+            return jsonify({"message": "Payment updated"}), 200
+        return jsonify({"error": "Failed to update"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    # ==========================================
+# 🔥 ADMIN LOGIN VERIFICATION
+# ==========================================
+@app.route('/api/pro_admin_login', methods=['POST'])
+def pro_admin_login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    
+    try:
+        # Supabase se email dhoondho
+        fetch_url = f"{SUPABASE_URL}/rest/v1/admin_users?email=eq.{email}&select=*"
+        response = requests.get(fetch_url, headers=HEADERS)
+        
+        if response.status_code == 200:
+            users = response.json()
+            if len(users) > 0:
+                # Email mil gaya, ab password match karo
+                db_password = users[0].get('password')
+                if password == db_password:
+                    return jsonify({"message": "Login successful"}), 200
+                else:
+                    return jsonify({"error": "Invalid password"}), 401
+            else:
+                return jsonify({"error": "User not found"}), 404
+        else:
+            return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+   # ==========================================
+# 🖨️ PRINT VIP ID CARD ROUTE (With Admin Phone)
+# ==========================================
+@app.route('/id_card/<int:p_id>', methods=['GET'])
+def print_id_card(p_id):
+    try:
+        # 1. Passenger ka data laao
+        fetch_url = f"{SUPABASE_URL}/rest/v1/passengers?id=eq.{p_id}&select=*"
+        res = requests.get(fetch_url, headers=HEADERS)
+        
+        if res.status_code == 200 and len(res.json()) > 0:
+            p_data = res.json()[0]
+            
+            # 2. Passenger ke Group se Admin ka Number nikaalo
+            group_name = p_data.get('group_name')
+            admin_phone = ""
+            if group_name:
+                # group_contacts table check karo
+                contact_url = f"{SUPABASE_URL}/rest/v1/group_contacts?group_letter=eq.{group_name}&select=phone"
+                c_res = requests.get(contact_url, headers=HEADERS)
+                if c_res.status_code == 200 and len(c_res.json()) > 0:
+                    admin_phone = c_res.json()[0].get('phone', '')
+            
+            # 3. Admin phone ko data me jod do aur HTML ko bhej do
+            p_data['admin_phone'] = admin_phone
+            
+            return render_template('id_card.html', p=p_data)
+            
+        return "Passenger data not found!", 404
     except Exception as e:
         return str(e), 500
 if __name__ == '__main__':
